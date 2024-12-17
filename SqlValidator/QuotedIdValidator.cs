@@ -7,37 +7,48 @@ public static class QuotedIdValidator
 
     public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
     {
-        throw new NotImplementedException();
-
         bool quoted = false;
 
+        if (input[0] == '"' && CheckQuotes(input, out int length)) 
+        {
+            remaining = input[length..];
+            return true;
+        }
+
+        //TODO: Missing letter validation
+        remaining = input;
+        return true;
+    }
+
+    private static bool CheckQuotes(ReadOnlySpan<char> input, out int length)
+    {
+        bool quoted = false;
+        length = 0;
+
         if (input[0] == '"') quoted = true;
-        if (quoted && input.Length < 2) 
-        { 
-            remaining = input;
-            return false; 
+        if (quoted && input.Length < 2)
+        {
+            return false;
         }
 
         for (int i = 1; i < input.Length; i++)
         {
-            if (input[i] != '\'') continue;
+            length = i + 1;
+            if (input[i] != '"') continue;
 
             // end of input
             if (++i >= input.Length)
             {
-                remaining = [];
                 return true;
             }
 
             // escaped apostrophe
-            if (input[i] == '\'') continue;
+            if (input[i] == '"') continue;
 
             // end of string
-            remaining = input[i..];
             return true;
         }
 
-        
-        //return false;
+        return false;
     }
 }

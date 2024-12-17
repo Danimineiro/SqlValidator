@@ -4,11 +4,6 @@ public static class OptionNamespaceValidator
     /// <summary>
     ///     Includes a terminating space
     /// </summary>
-    private const int SET_TokenLength = 4;
-
-    /// <summary>
-    ///     Includes a terminating space
-    /// </summary>
     private const int NAMESPACE_TokenLength = 10;
 
     /// <summary>
@@ -18,15 +13,22 @@ public static class OptionNamespaceValidator
 
     public static bool Validate(ReadOnlySpan<char> input)
     {
-        ReadOnlySpan<char> remaining;
+        if (!input.StartsWith("NAMESPACE", StringComparison.OrdinalIgnoreCase))
+        { 
+            return false; 
+        }
 
-        if (!input.StartsWith("SET", StringComparison.OrdinalIgnoreCase)) return false;
-        if (!(remaining = input[SET_TokenLength..]).StartsWith("NAMESPACE", StringComparison.OrdinalIgnoreCase)) return false;
-
-        if (!SqlStringValidator.Validate(remaining[NAMESPACE_TokenLength..], out ReadOnlySpan<char> after)) return false;
+        if (!SqlStringValidator.Validate(input[NAMESPACE_TokenLength..], out ReadOnlySpan<char> remaining)) 
+        { 
+            return false; 
+        }
 
         // Skip whitespace after string
-        if (!(remaining = after[1..]).StartsWith("AS")) return false;
-        return IdentifierValidator.Validate(remaining[(AS_TokenLength)..]);
+        if (!(remaining = remaining[1..]).StartsWith("AS", StringComparison.OrdinalIgnoreCase)) 
+        { 
+            return false; 
+        }
+
+        return IdentifierValidator.Validate(remaining[AS_TokenLength..]);
     }
 }
