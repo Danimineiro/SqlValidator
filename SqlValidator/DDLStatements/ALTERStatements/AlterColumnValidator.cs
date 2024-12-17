@@ -1,4 +1,3 @@
-﻿using SqlValidator.Identifiers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,32 +7,28 @@ using System.Threading.Tasks;
 namespace SqlValidator.DDLStatements.ALTERStatements;
 public static class AlterColumnValidator
 {
-    public static bool Validate(ReadOnlySpan<char> command) {
-        ReadOnlySpan<char> remainingCommand = command;
-        ReadOnlySpan<char> remaining = [];
-        if(Helper.HasNextToken(remainingCommand, "ALTER", out remaining))
+    private static int lengthCovered = 0;
+    private const int ALTER_COLUMN_TOKEN_LENGTH = 13;
+    private const int ALTER_PARAMETER_TOKEN_LENGTH = 16;
+    public static bool Validate(ReadOnlySpan<char> command)
+    {
+
+        if (command.StartsWith("ALTER COLUMN"))
         {
-            remainingCommand = remaining;
-            if (Helper.HasNextToken(remainingCommand, "COLUMN", out remaining))
-            {
-                remainingCommand = remaining;
-            }
-            else if (Helper.HasNextToken(remainingCommand, "PARAMETER", out remaining))
-            {
-                remainingCommand = remaining;
-            } else
-            {
-                return false;
-            }
+            lengthCovered += ALTER_COLUMN_TOKEN_LENGTH;
+        }
+        else if (command.StartsWith("ALTER PARAMETER"))
+        {
+            lengthCovered += ALTER_PARAMETER_TOKEN_LENGTH;
         }
         else
         {
             return false;
         }
-        if (Helper.IsNextTokenIdentifier(remainingCommand, out remaining))
+        if (IdentifierValidator.Validate(command[lengthCovered..]))
         {
-            remainingCommand = remaining;
-            if (AlterOptionsValidator.Validate(remainingCommand))
+            lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
+            if (AlterOptionsValidator.Validate(command[lengthCovered..]))
             {
                 return true;
             }
