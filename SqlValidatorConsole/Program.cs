@@ -20,9 +20,7 @@ internal class Program
             break;
         }
 
-        DDLStatementValidator validator = new(command);
-
-        string result = validator.Validate() ? string.Empty : "not ";
+        string result = DDLStatementValidator.Validate(command) ? string.Empty : "not ";
 
         Console.WriteLine($"Your input was {result}a succesful input.");
     }
