@@ -1,4 +1,6 @@
 ﻿
+using SqlValidator.ALTERStatements;
+
 namespace SqlValidator.DDLStatements;
 
 public static class DDLStatementValidator
@@ -14,7 +16,7 @@ public static class DDLStatementValidator
         return firstToken switch
         {
             "create" => CreateTableValidator.Validate(command),
-            "alter" => true,
+            "alter" => AlterValidator.Validate(command[6..]),
             "set" => OptionNamespaceValidator.Validate(command[4..]),
             _ => false
         };
