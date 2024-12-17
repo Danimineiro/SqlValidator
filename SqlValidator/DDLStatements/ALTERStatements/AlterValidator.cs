@@ -1,4 +1,3 @@
-﻿using SqlValidator.Identifiers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -9,73 +8,83 @@ using System.Threading.Tasks;
 namespace SqlValidator.DDLStatements.ALTERStatements;
 public static class AlterValidator
 {
+    /*
+    private const int VIRTUAL_TokenLength = 8;
+    private const int FOREIGN_TokenLength = 8;
+    private const int TABLE_TokenLength = 6;
+    private const int VIEW_TokenLength = 5;
+    private const int PROCEDURE_TokenLength = 10;
+     
+    command.StartsWith("VIRTUAL", StringComparison.OrdinalIgnoreCase)
+    command.StartsWith("FOREIGN", StringComparison.OrdinalIgnoreCase)
+    command.StartsWith("TABLE", StringComparison.OrdinalIgnoreCase
+    command.StartsWith("VIEW", StringComparison.OrdinalIgnoreCase)
+    command.StartsWith("PROCEDURE", StringComparison.OrdinalIgnoreCase)
+    */
     public static bool Validate(ReadOnlySpan<char> command)
     {
-        ReadOnlySpan<char> remainingCommand = command;
-        ReadOnlySpan<char> remaining = [];
-        if (CheckForVirtualOrForeign(remainingCommand, out remaining))
+        int lengthCovered = 0;
+        if (command.StartsWith("VIRTUAL", StringComparison.OrdinalIgnoreCase) || command.StartsWith("FOREIGN", StringComparison.OrdinalIgnoreCase))
         {
-            remainingCommand = remaining;
-            if (CheckForTableViewProcedure(remainingCommand, out remaining))
+            lengthCovered += GetNextTokenLength(command);
+            if (CheckForTableViewProcedure(command[lengthCovered..]))
             {
-                remainingCommand = remaining;
-                if (Helper.IsNextTokenIdentifier(remainingCommand, out remaining))
+                lengthCovered += GetNextTokenLength(command[lengthCovered..]);
+                if (IdentifierValidator.Validate(command[lengthCovered..]))
                 {
-                    remainingCommand = remaining;
-                    if (AlterOptionsValidator.Validate(remainingCommand) || AlterColumnValidator.Validate(remainingCommand))
+                    lengthCovered += GetNextTokenLength(command[lengthCovered..]);
+                    if (AlterOptionsValidator.Validate(command[lengthCovered..]) || AlterColumnValidator.Validate(command[lengthCovered..]))
                     {
                         return true;
                     }
-                } else
+                }
+                else
                 {
                     return false;
                 }
-            } else
+            }
+            else
             {
                 return false;
             }
-                
-        } else if(CheckForTableViewProcedure(remainingCommand, out remaining))
+
+        }
+        else if (CheckForTableViewProcedure(command))
         {
-            remainingCommand = remaining;
-            if (Helper.IsNextTokenIdentifier(remainingCommand, out remaining))
+            lengthCovered += GetNextTokenLength(command[lengthCovered..]);
+            if (IdentifierValidator.Validate(command[lengthCovered..]))
             {
-                remainingCommand = remaining;
-                if (AlterOptionsValidator.Validate(remainingCommand) || AlterColumnValidator.Validate(remainingCommand))
+                lengthCovered += GetNextTokenLength(command[lengthCovered..]);
+                if (AlterOptionsValidator.Validate(command[lengthCovered..]) || AlterColumnValidator.Validate(command[lengthCovered..]))
                 {
                     return true;
                 }
             }
-        } 
+        }
         return false;
     }
 
-    private static bool CheckForTableViewProcedure(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining) {
-        if(Helper.HasNextToken(command, "TABLE", out remaining))
-        {
-            return true;
-        }
-        if (Helper.HasNextToken(command, "PROCEDURE", out remaining))            
-        {
-            return true;
-        }
-        if (Helper.HasNextToken(command, "VIEW", out remaining))
-        {
-            return true;
-        }
-        return false;
-    }
-    private static bool CheckForVirtualOrForeign(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
+    // Counts until next Whitespace and then returns amount of characters
+    internal static int GetNextTokenLength(ReadOnlySpan<char> command)
     {
-        if (Helper.HasNextToken(command, "VIRTUAL", out remaining))
+        for (int i = 0; i < command.Length; i++)
         {
-            return true;
+            if (command[i..].StartsWith(" "))
+            {
+                return i + 1;
+            }
         }
-        if (Helper.HasNextToken(command, "FOREIGN", out remaining))
+        return command.Length;
+    }
+
+    private static bool CheckForTableViewProcedure(ReadOnlySpan<char> command)
+    {
+        if (command.StartsWith("TABLE", StringComparison.OrdinalIgnoreCase)
+            || command.StartsWith("VIEW", StringComparison.OrdinalIgnoreCase)
+            || command.StartsWith("PROCEDURE", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
         return false;
     }
-
 }
