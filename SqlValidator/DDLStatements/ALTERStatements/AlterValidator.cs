@@ -1,4 +1,3 @@
-﻿using SqlValidator.Identifiers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -25,32 +24,35 @@ public static class AlterValidator
     public static bool Validate(ReadOnlySpan<char> command)
     {
         int lengthCovered = 0;
-        if(command.StartsWith("VIRTUAL", StringComparison.OrdinalIgnoreCase) || command.StartsWith("FOREIGN", StringComparison.OrdinalIgnoreCase))
+        if (command.StartsWith("VIRTUAL", StringComparison.OrdinalIgnoreCase) || command.StartsWith("FOREIGN", StringComparison.OrdinalIgnoreCase))
         {
             lengthCovered += GetNextTokenLength(command);
             if (CheckForTableViewProcedure(command[lengthCovered..]))
             {
                 lengthCovered += GetNextTokenLength(command[lengthCovered..]);
-                if(IdentifierValidator.Validate(command[lengthCovered..], out _))
+                if (IdentifierValidator.Validate(command[lengthCovered..]))
                 {
                     lengthCovered += GetNextTokenLength(command[lengthCovered..]);
-                    if(AlterOptionsValidator.Validate(command[lengthCovered..]) || AlterColumnValidator.Validate(command[lengthCovered..]))
+                    if (AlterOptionsValidator.Validate(command[lengthCovered..]) || AlterColumnValidator.Validate(command[lengthCovered..]))
                     {
                         return true;
                     }
-                } else
+                }
+                else
                 {
                     return false;
                 }
-            } else
+            }
+            else
             {
                 return false;
             }
-                
-        } else if(CheckForTableViewProcedure(command))
+
+        }
+        else if (CheckForTableViewProcedure(command))
         {
             lengthCovered += GetNextTokenLength(command[lengthCovered..]);
-            if (IdentifierValidator.Validate(command[lengthCovered..], out _))
+            if (IdentifierValidator.Validate(command[lengthCovered..]))
             {
                 lengthCovered += GetNextTokenLength(command[lengthCovered..]);
                 if (AlterOptionsValidator.Validate(command[lengthCovered..]) || AlterColumnValidator.Validate(command[lengthCovered..]))
@@ -58,7 +60,7 @@ public static class AlterValidator
                     return true;
                 }
             }
-        } 
+        }
         return false;
     }
 
@@ -67,35 +69,22 @@ public static class AlterValidator
     {
         for (int i = 0; i < command.Length; i++)
         {
-            if (command[i..].StartsWith(" ")) {
-                return i+1;
-            } else if (command[i..].StartsWith(","))
+            if (command[i..].StartsWith(" "))
             {
-                return i;
+                return i + 1;
             }
         }
         return command.Length;
     }
 
-    internal static ReadOnlySpan<char> GetNextToken(ReadOnlySpan<char> command)
+    private static bool CheckForTableViewProcedure(ReadOnlySpan<char> command)
     {
-        for (int i = 0; i < command.Length; i++)
-        {
-            if (command[i..].StartsWith(" ") || command[i..].StartsWith(","))
-            {
-                return command[0..i];
-            }
-        }
-        return command;
-    }
-
-    private static bool CheckForTableViewProcedure(ReadOnlySpan<char> command) {
-        if(command.StartsWith("TABLE", StringComparison.OrdinalIgnoreCase)
+        if (command.StartsWith("TABLE", StringComparison.OrdinalIgnoreCase)
             || command.StartsWith("VIEW", StringComparison.OrdinalIgnoreCase)
             || command.StartsWith("PROCEDURE", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
-    return false;
+        return false;
     }
 }
