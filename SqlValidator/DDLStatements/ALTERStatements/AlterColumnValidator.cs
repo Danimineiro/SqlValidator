@@ -26,7 +26,7 @@ public static bool Validate(ReadOnlySpan<char> command) {
         {
             lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
             if (AlterOptionsValidator.Validate(command[lengthCovered..]))
-            {
+        {
                 return true;
             }
         }
