@@ -1,29 +1,23 @@
 ﻿using System.Buffers;
 
-namespace SqlValidator;
+namespace SqlValidator.Identifiers;
 public static class QuotedIdValidator
 {
-    private static readonly SearchValues<char> Letters = SearchValues.Create('A');
-
     public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
     {
-        bool quoted = false;
-
-        if (input[0] == '"' && CheckQuotes(input, out int length)) 
+        if (input[0] == '"' && CheckQuotes(input, out int endIndex))
         {
-            remaining = input[length..];
-            return true;
+            remaining = input[(endIndex + 1)..];
+            return ID_Validator.Validate(input[1..endIndex]);
         }
 
-        //TODO: Missing letter validation
-        remaining = input;
-        return true;
+        return ID_Validator.Validate(input, out remaining);
     }
 
-    private static bool CheckQuotes(ReadOnlySpan<char> input, out int length)
+    private static bool CheckQuotes(ReadOnlySpan<char> input, out int endIndex)
     {
         bool quoted = false;
-        length = 0;
+        endIndex = 0;
 
         if (input[0] == '"') quoted = true;
         if (quoted && input.Length < 2)
@@ -33,7 +27,7 @@ public static class QuotedIdValidator
 
         for (int i = 1; i < input.Length; i++)
         {
-            length = i + 1;
+            endIndex = i;
             if (input[i] != '"') continue;
 
             // end of input
