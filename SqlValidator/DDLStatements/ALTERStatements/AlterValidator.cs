@@ -1,4 +1,3 @@
-using SqlValidator.Identifiers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -31,7 +30,7 @@ public static class AlterValidator
             if (CheckForTableViewProcedure(command[lengthCovered..]))
             {
                 lengthCovered += GetNextTokenLength(command[lengthCovered..]);
-                if (IdentifierValidator.Validate(command[lengthCovered..], out _))
+                if (IdentifierValidator.Validate(command[lengthCovered..]))
                 {
                     lengthCovered += GetNextTokenLength(command[lengthCovered..]);
                     if (AlterOptionsValidator.Validate(command[lengthCovered..]) || AlterColumnValidator.Validate(command[lengthCovered..]))
@@ -53,7 +52,7 @@ public static class AlterValidator
         else if (CheckForTableViewProcedure(command))
         {
             lengthCovered += GetNextTokenLength(command[lengthCovered..]);
-            if (IdentifierValidator.Validate(command[lengthCovered..], out _))
+            if (IdentifierValidator.Validate(command[lengthCovered..]))
             {
                 lengthCovered += GetNextTokenLength(command[lengthCovered..]);
                 if (AlterOptionsValidator.Validate(command[lengthCovered..]) || AlterColumnValidator.Validate(command[lengthCovered..]))
@@ -74,24 +73,8 @@ public static class AlterValidator
             {
                 return i + 1;
             }
-            else if (command[i..].StartsWith(","))
-            {
-                return i;
-            }
         }
         return command.Length;
-    }
-
-    internal static ReadOnlySpan<char> GetNextToken(ReadOnlySpan<char> command)
-    {
-        for (int i = 0; i < command.Length; i++)
-        {
-            if (command[i..].StartsWith(" ") || command[i..].StartsWith(","))
-            {
-                return command[0..i];
-            }
-        }
-        return command;
     }
 
     private static bool CheckForTableViewProcedure(ReadOnlySpan<char> command)
