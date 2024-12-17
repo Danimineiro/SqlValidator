@@ -1,4 +1,4 @@
-﻿using SqlValidator;
+﻿using SqlValidator.DDLStatements;
 
 namespace SqlValidatorConsole;
 
@@ -20,9 +20,7 @@ internal class Program
             break;
         }
 
-        ExecutableStatementValidator validator = new(command);
-
-        string result = validator.Validate() ? string.Empty : "not ";
+        string result = DDLStatementValidator.Validate(command) ? string.Empty : "not ";
 
         Console.WriteLine($"Your input was {result}a succesful input.");
     }
