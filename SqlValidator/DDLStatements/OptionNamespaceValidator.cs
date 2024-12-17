@@ -1,4 +1,6 @@
-﻿namespace SqlValidator.DDLStatements;
+﻿using SqlValidator.Identifiers;
+
+namespace SqlValidator.DDLStatements;
 public static class OptionNamespaceValidator
 {
     /// <summary>
@@ -13,7 +15,7 @@ public static class OptionNamespaceValidator
 
     public static bool Validate(ReadOnlySpan<char> input)
     {
-        if (!input.StartsWith("NAMESPACE", StringComparison.OrdinalIgnoreCase))
+        if (!input.SqlStartsWith("NAMESPACE"))
         { 
             return false; 
         }
@@ -24,11 +26,11 @@ public static class OptionNamespaceValidator
         }
 
         // Skip whitespace after string
-        if (!(remaining = remaining[1..]).StartsWith("AS", StringComparison.OrdinalIgnoreCase)) 
+        if (!(remaining = remaining[1..]).SqlStartsWith("AS")) 
         { 
             return false; 
         }
 
-        return IdentifierValidator.Validate(remaining[AS_TokenLength..]);
+        return IdentifierValidator.Validate(remaining[AS_TokenLength..], out _);
     }
 }
