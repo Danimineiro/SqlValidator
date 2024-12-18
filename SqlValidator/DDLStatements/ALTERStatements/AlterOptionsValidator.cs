@@ -16,14 +16,14 @@ public static class AlterOptionsValidator
     {
         while(!allOptionsCovered) {
             if (command.StartsWith("OPTIONS", StringComparison.OrdinalIgnoreCase))
-            {
-                lengthCovered += AlterValidator.GetNextTokenLength(command);
+        {
+            lengthCovered += AlterValidator.GetNextTokenLength(command);
                 if (ParenthesesValidator.StartsAndEndsWithParentheses(command[lengthCovered..]))
                 {
-                    lengthCovered += 1;
-                    if (command[lengthCovered..].StartsWith("ADD") || command[lengthCovered..].StartsWith("SET"))
-                    {
-                        lengthCovered += ADD_SET_TOKEN_LENGTH;
+                lengthCovered += 1;
+                if (command[lengthCovered..].StartsWith("ADD") || command[lengthCovered..].StartsWith("SET"))
+                {
+                    lengthCovered += ADD_SET_TOKEN_LENGTH;
                         if (IdentifierValidator.Validate(command[lengthCovered..], out _))
                         {
                             lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
@@ -45,12 +45,12 @@ public static class AlterOptionsValidator
                                 }
                             }
                         }
-                        // TODO: ADD/SET Option list check 
+                       
 
                     }
                     else if (command[lengthCovered..].StartsWith("DROP"))
-                    {
-                        lengthCovered += DROP_TOKEN_LENGTH;
+                {
+                    lengthCovered += DROP_TOKEN_LENGTH;
                         if (IdentifierValidator.Validate(command[lengthCovered..], out _))
                         {
                             lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
@@ -71,7 +71,7 @@ public static class AlterOptionsValidator
             {
                 return false;
             }
-        }
+        } 
         return true;
     }
 
