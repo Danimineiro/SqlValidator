@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 namespace SqlValidator.DDLStatements.ALTERStatements;
 public static class AlterOptionsValidator
 {
+    private const int ADD_SET_TOKEN_LENGTH = 4;
+    private const int DROP_TOKEN_LENGTH = 5;
     private static int lengthCovered = 0;
     public static bool Validate(ReadOnlySpan<char> command)
     {
@@ -19,11 +21,15 @@ public static class AlterOptionsValidator
                 lengthCovered += 1;
                 if (command[lengthCovered..].StartsWith("ADD") || command[lengthCovered..].StartsWith("SET"))
                 {
-                    lengthCovered += 4;
+                    lengthCovered += ADD_SET_TOKEN_LENGTH;
                 }
                 else if (command[lengthCovered..].StartsWith("DROP"))
                 {
-                    lengthCovered += 5;
+                    lengthCovered += DROP_TOKEN_LENGTH;
+                    if (!IdentifierValidator.Validate(command[lengthCovered..]))
+                    {
+                        return false;
+                    }
                 }
             }
         }
