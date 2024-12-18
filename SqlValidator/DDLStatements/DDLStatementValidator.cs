@@ -1,4 +1,5 @@
-﻿namespace SqlValidator.DDLStatements;
+﻿
+namespace SqlValidator.DDLStatements;
 
 public static class DDLStatementValidator
 {
