@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SqlValidator.Identifiers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,7 +28,7 @@ public static bool Validate(ReadOnlySpan<char> command) {
         {
             lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
             if (AlterOptionsValidator.Validate(command[lengthCovered..]))
-        {
+            {
                 return true;
             }
         }
