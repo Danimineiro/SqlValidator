@@ -8,19 +8,20 @@ using System.Threading.Tasks;
 namespace SqlValidator.DDLStatements.ALTERStatements;
 public static class AlterValidator
 {
+
     /*
-    private const int VIRTUAL_TokenLength = 8;
-    private const int FOREIGN_TokenLength = 8;
-    private const int TABLE_TokenLength = 6;
-    private const int VIEW_TokenLength = 5;
-    private const int PROCEDURE_TokenLength = 10;
-     
-    command.StartsWith("VIRTUAL", StringComparison.OrdinalIgnoreCase)
-    command.StartsWith("FOREIGN", StringComparison.OrdinalIgnoreCase)
-    command.StartsWith("TABLE", StringComparison.OrdinalIgnoreCase
-    command.StartsWith("VIEW", StringComparison.OrdinalIgnoreCase)
-    command.StartsWith("PROCEDURE", StringComparison.OrdinalIgnoreCase)
-    */
+private const int VIRTUAL_TokenLength = 8;
+private const int FOREIGN_TokenLength = 8;
+private const int TABLE_TokenLength = 6;
+private const int VIEW_TokenLength = 5;
+private const int PROCEDURE_TokenLength = 10;
+
+command.StartsWith("VIRTUAL", StringComparison.OrdinalIgnoreCase)
+command.StartsWith("FOREIGN", StringComparison.OrdinalIgnoreCase)
+command.StartsWith("TABLE", StringComparison.OrdinalIgnoreCase
+command.StartsWith("VIEW", StringComparison.OrdinalIgnoreCase)
+command.StartsWith("PROCEDURE", StringComparison.OrdinalIgnoreCase)
+*/
     public static bool Validate(ReadOnlySpan<char> command)
     {
         int lengthCovered = 0;
@@ -30,7 +31,9 @@ public static class AlterValidator
             if (CheckForTableViewProcedure(command[lengthCovered..]))
             {
                 lengthCovered += GetNextTokenLength(command[lengthCovered..]);
-                if (IdentifierValidator.Validate(command[lengthCovered..]))
+                int tokenEnd = lengthCovered + GetNextTokenLength(command[lengthCovered..]);
+                ReadOnlySpan<char> identifierToken = command[lengthCovered..tokenEnd];
+                if (IdentifierValidator.Validate(identifierToken, out _))
                 {
                     lengthCovered += GetNextTokenLength(command[lengthCovered..]);
                     if (AlterOptionsValidator.Validate(command[lengthCovered..]) || AlterColumnValidator.Validate(command[lengthCovered..]))
@@ -67,13 +70,32 @@ public static class AlterValidator
     // Counts until next Whitespace and then returns amount of characters
     internal static int GetNextTokenLength(ReadOnlySpan<char> command)
     {
-        for (int i = 0; i < command.Length; i++)
+        if (!command.TrimStart().StartsWith("\""))
         {
-            if (command[i..].StartsWith(" "))
+            for (int i = 0; i < command.Length; i++)
             {
-                return i + 1;
+                if (command[i..].StartsWith(" "))
+                {
+                    return i + 1;
+                }
+                else if (command[i..].StartsWith(","))
+                {
+                    return i;
+                }
             }
         }
+        else if (command.TrimStart().StartsWith("\""))
+        {
+            for (int i = 1; i < command.Length; i++)
+            {
+                if (command[i..].StartsWith("\""))
+                {
+                    return i;
+                }
+            }
+        }
+
+
         return command.Length;
     }
 

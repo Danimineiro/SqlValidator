@@ -10,11 +10,14 @@ public static class AlterOptionsValidator
     private const int ADD_SET_TOKEN_LENGTH = 4;
     private const int DROP_TOKEN_LENGTH = 5;
     private static int lengthCovered = 0;
+    private static bool allOptionsCovered = false;
+
     public static bool Validate(ReadOnlySpan<char> command)
     {
 
         if (command.StartsWith("OPTIONS", StringComparison.OrdinalIgnoreCase))
         {
+
             lengthCovered += AlterValidator.GetNextTokenLength(command);
             if (ParenthesesValidator.StartsAndEndsWithParentheses(command[lengthCovered..]))
             {
@@ -22,6 +25,31 @@ public static class AlterOptionsValidator
                 if (command[lengthCovered..].StartsWith("ADD") || command[lengthCovered..].StartsWith("SET"))
                 {
                     lengthCovered += ADD_SET_TOKEN_LENGTH;
+                    int tokenEnd = lengthCovered + AlterValidator.GetNextTokenLength(command[lengthCovered..]);
+                    if (IdentifierValidator.Validate(command[lengthCovered..tokenEnd], out _))
+                    {
+                        lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
+                        remaining = command[lengthCovered..].ToString();
+                        ReadOnlySpan<char> nextToken = AlterValidator.GetNextToken(command[lengthCovered..].TrimStart());
+                        bool tokenIsNumeric = float.TryParse(nextToken, out _);
+                        if (!tokenIsNumeric)
+                        {
+                            lengthCovered += nextToken.Length;
+                            if (!command[lengthCovered..].TrimStart().StartsWith(","))
+                            {
+                                allOptionsCovered = true;
+                            }
+                        }
+                        else
+                        {
+                            lengthCovered += nextToken.Length;
+                            if (!command[lengthCovered..].TrimStart().StartsWith(","))
+                            {
+                                allOptionsCovered = true;
+                            }
+                        }
+                    }
+
                 }
                 else if (command[lengthCovered..].StartsWith("DROP"))
                 {
