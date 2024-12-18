@@ -45,7 +45,6 @@ public static class AlterOptionsValidator
                                 }
                             }
                         }
-                        // TODO: ADD/SET Option list check 
 
                     }
                     else if (command[lengthCovered..].StartsWith("DROP"))
