@@ -3,15 +3,17 @@
 namespace SqlValidator.Identifiers;
 public static class QuotedIdValidator
 {
+    private const char doubleQuote = '"';
+
     public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
     {
-        if (input[0] == '"' && CheckQuotes(input, out int endIndex))
+        if (input[0] == doubleQuote && CheckQuotes(input, out int endIndex))
         {
             remaining = input[(endIndex + 1)..];
             return ID_Validator.Validate(input[1..endIndex]);
         }
 
-        return ID_Validator.Validate(input, out remaining);
+        return ID_Validator.Validate(input, out remaining) && (remaining.IsEmpty || remaining[0] == ' ');
     }
 
     private static bool CheckQuotes(ReadOnlySpan<char> input, out int endIndex)
@@ -19,7 +21,7 @@ public static class QuotedIdValidator
         bool quoted = false;
         endIndex = 0;
 
-        if (input[0] == '"') quoted = true;
+        if (input[0] == doubleQuote) quoted = true;
         if (quoted && input.Length < 2)
         {
             return false;
@@ -28,7 +30,7 @@ public static class QuotedIdValidator
         for (int i = 1; i < input.Length; i++)
         {
             endIndex = i;
-            if (input[i] != '"') continue;
+            if (input[i] != doubleQuote) continue;
 
             // end of input
             if (++i >= input.Length)
@@ -37,7 +39,7 @@ public static class QuotedIdValidator
             }
 
             // escaped apostrophe
-            if (input[i] == '"') continue;
+            if (input[i] == doubleQuote) continue;
 
             // end of string
             return true;
