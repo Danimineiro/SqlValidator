@@ -173,6 +173,8 @@ internal class CreateProcedureValidator
 
     private static bool ValidateProcedureResultColumn(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
     {
+        remaining = command;
+        throw new NotImplementedException();
         if (!IdentifierValidator.Validate(command, out remaining))
         {
             return false;
