@@ -1,5 +1,4 @@
-﻿
-using SqlValidator.ALTERStatements;
+﻿using SqlValidator.DDLStatements.ALTERStatements;
 
 namespace SqlValidator.DDLStatements;
 
