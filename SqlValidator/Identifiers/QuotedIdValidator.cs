@@ -5,7 +5,9 @@ public static class QuotedIdValidator
 {
     private const char doubleQuote = '"';
 
-    public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining) => Validate(input, " ", out remaining);
+
+    public static bool Validate(ReadOnlySpan<char> input, ReadOnlySpan<char> allowedContinuations, out ReadOnlySpan<char> remaining)
     {
         if (input[0] == doubleQuote && CheckQuotes(input, out int endIndex))
         {
@@ -13,7 +15,7 @@ public static class QuotedIdValidator
             return ID_Validator.Validate(input[1..endIndex]);
         }
 
-        return ID_Validator.Validate(input, out remaining) && (remaining.IsEmpty || remaining[0] == ' ');
+        return ID_Validator.Validate(input, out remaining) && (remaining.IsEmpty || allowedContinuations.Contains(remaining[0]));
     }
 
     private static bool CheckQuotes(ReadOnlySpan<char> input, out int endIndex)
