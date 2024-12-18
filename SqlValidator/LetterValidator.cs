@@ -1,5 +1,4 @@
 ﻿using System.Buffers;
-using System.Runtime.InteropServices;
 
 namespace SqlValidator;
 public static class LetterValidator
