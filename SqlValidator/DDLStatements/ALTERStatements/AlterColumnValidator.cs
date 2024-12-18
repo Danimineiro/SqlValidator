@@ -23,7 +23,8 @@ public static bool Validate(ReadOnlySpan<char> command) {
         {
             return false;
         }
-        if (IdentifierValidator.Validate(command[lengthCovered..], out _))
+        int tokenEnd = lengthCovered + AlterValidator.GetNextTokenLength(command[lengthCovered..]);
+        if (IdentifierValidator.Validate(command[lengthCovered..tokenEnd], out _))
         {
             lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
             if (AlterOptionsValidator.Validate(command[lengthCovered..]))
