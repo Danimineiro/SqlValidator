@@ -12,7 +12,7 @@ public static class DDLStatementValidator
 
         return firstToken switch
         {
-            "create" => true,
+            "create" => CreateTableValidator.Validate(command),
             "alter" => true,
             "set" => OptionNamespaceValidator.Validate(command[4..]),
             _ => false
