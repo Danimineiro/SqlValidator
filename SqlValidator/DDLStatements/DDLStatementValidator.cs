@@ -1,7 +1,4 @@
-﻿using SqlValidator.DDLStatements.ALTERStatements;
-
-using SqlValidator.DirectlyExecutableStatements;
-
+﻿
 namespace SqlValidator.DDLStatements;
 
 public static class DDLStatementValidator
