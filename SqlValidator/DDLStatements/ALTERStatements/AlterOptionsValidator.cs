@@ -23,7 +23,7 @@ public static class AlterOptionsValidator
                 lengthCovered += 1;
                 if (command[lengthCovered..].StartsWith("ADD") || command[lengthCovered..].StartsWith("SET"))
                 {
-                        lengthCovered += ADD_SET_TOKEN_LENGTH;
+                    lengthCovered += ADD_SET_TOKEN_LENGTH;
                         if (IdentifierValidator.Validate(command[lengthCovered..], out _))
                         {
                             lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
@@ -48,16 +48,16 @@ public static class AlterOptionsValidator
 
                     }
                     else if (command[lengthCovered..].StartsWith("DROP"))
-                    {
-                        lengthCovered += DROP_TOKEN_LENGTH;
+                {
+                    lengthCovered += DROP_TOKEN_LENGTH;
                         if (IdentifierValidator.Validate(command[lengthCovered..], out _))
                         {
                             lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
                             if (!command[lengthCovered..].TrimStart().StartsWith(","))
-                {
+                            {
                                 allOptionsCovered = true;
-                }
-            }
+                            }
+                        }
                     } else
                     {
                         return false;
@@ -65,12 +65,12 @@ public static class AlterOptionsValidator
                 } else
                 {
                     return false;
-        } 
+                }
             } else
             {
-        return false;
-    }
-        }
+                return false;
+            }
+        } 
         return true;
     }
 
