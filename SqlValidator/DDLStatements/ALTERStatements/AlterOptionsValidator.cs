@@ -7,70 +7,102 @@ using System.Threading.Tasks;
 namespace SqlValidator.DDLStatements.ALTERStatements;
 public static class AlterOptionsValidator
 {
-    private const int ADD_SET_TOKEN_LENGTH = 4;
-    private const int DROP_TOKEN_LENGTH = 5;
-    private static int lengthCovered = 0;
     private static bool allOptionsCovered = false;
 
     public static bool Validate(ReadOnlySpan<char> command)
     {
+        ReadOnlySpan<char> remaining = [];
+        ReadOnlySpan<char> remainingCommand = command;
 
-        if (command.StartsWith("OPTIONS", StringComparison.OrdinalIgnoreCase))
+        if (!Helper.HasNextToken("OPTIONS", remainingCommand, out remaining)
         {
+            return false;
+        }
 
-            lengthCovered += AlterValidator.GetNextTokenLength(command);
-            if (ParenthesesValidator.StartsAndEndsWithParentheses(command[lengthCovered..]))
+        remainingCommand = remaining;
+        if (remainingCommand is not ['(', .., ')'])
+        {
+            return false;
+        }
+        while (!allOptionsCovered)
+        {
+            remainingCommand = remainingCommand[1..];
+            if (CheckForAddSet(remainingCommand, out remaining))
             {
-                lengthCovered += 1;
-                if (command[lengthCovered..].StartsWith("ADD") || command[lengthCovered..].StartsWith("SET"))
+                remainingCommand = remaining;
+                if (IdentifierValidator.Validate(remainingCommand, out remaining))
                 {
-                    lengthCovered += ADD_SET_TOKEN_LENGTH;
-                    int tokenEnd = lengthCovered + AlterValidator.GetNextTokenLength(command[lengthCovered..]);
-                    if (IdentifierValidator.Validate(command[lengthCovered..tokenEnd], out _))
-                    {
-                        lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
-                        remaining = command[lengthCovered..].ToString();
-                        ReadOnlySpan<char> nextToken = AlterValidator.GetNextToken(command[lengthCovered..].TrimStart());
-                        bool tokenIsNumeric = float.TryParse(nextToken, out _);
-                        if (!tokenIsNumeric)
-                        {
-                            lengthCovered += nextToken.Length;
-                            if (!command[lengthCovered..].TrimStart().StartsWith(","))
-                            {
-                                allOptionsCovered = true;
-                            }
-                        }
-                        else
-                        {
-                            lengthCovered += nextToken.Length;
-                            if (!command[lengthCovered..].TrimStart().StartsWith(","))
-                            {
-                                allOptionsCovered = true;
-                            }
-                        }
-                    }
-
+                    remainingCommand = remaining;
                 }
-                else if (command[lengthCovered..].StartsWith("DROP"))
+
+            }
+            else if (Helper.HasNextToken(remainingCommand, "DROP", out remaining))
+            {
+                remainingCommand = remaining;
+                if (IdentifierValidator.Validate(remainingCommand, out remaining))
                 {
-                    lengthCovered += DROP_TOKEN_LENGTH;
-                    if (!IdentifierValidator.Validate(command[lengthCovered..]))
-                    {
-                        return false;
-                    }
+                    remainingCommand = remaining;
                 }
             }
         }
-        return false;
+        /*
+        {
+            
+            if (IdentifierValidator.Validate(command[lengthCovered..tokenEnd], out _))
+            {
+                lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
+                ReadOnlySpan<char> nextToken = AlterValidator.GetNextToken(command[lengthCovered..].TrimStart());
+                bool tokenIsNumeric = float.TryParse(nextToken, out _);
+                if (!tokenIsNumeric)
+                {
+                    lengthCovered += nextToken.Length;
+                    if (!command[lengthCovered..].TrimStart().StartsWith(","))
+                    {
+                        allOptionsCovered = true;
+                    }
+                }
+                else
+                {
+                    lengthCovered += nextToken.Length;
+                    if (!command[lengthCovered..].TrimStart().StartsWith(","))
+                    {
+                        allOptionsCovered = true;
+                    }
+                }
+            }
+
+        }
+        else if (command[lengthCovered..].StartsWith("DROP"))
+        {
+            lengthCovered += DROP_TOKEN_LENGTH;
+            if (IdentifierValidator.Validate(command[lengthCovered..], out _))
+            {
+                lengthCovered += AlterValidator.GetNextTokenLength(command[lengthCovered..]);
+                if (!command[lengthCovered..].TrimStart().StartsWith(","))
+                {
+                    allOptionsCovered = true;
+                }
+            }
+        }
+        else
+        {
+            return false;
+        }
+        */
+
+        return true;
     }
 
-    internal static bool ValidateDROPOption(ReadOnlySpan<char> command)
+    internal static bool CheckForAddSet(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
     {
-        return false;
-    }
-
-    internal static bool ValidateADDSETOption(ReadOnlySpan<char> command)
-    {
+        if (Helper.HasNextToken("ADD", command, out remaining))
+        {
+            return true;
+        }
+        if (Helper.HasNextToken("SET", command, out remaining))
+        {
+            return true;
+        }
         return false;
     }
 }
