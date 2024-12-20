@@ -1,8 +1,7 @@
-﻿using SqlValidator.DirectlyExecutableStatements;
+﻿using SqlValidator.DirectlyExecutableStatements.QueryExpressions;
 
-namespace SqlValidator.DDLStatements;
-
-public static class DDLStatementValidator
+namespace SqlValidator.DirectlyExecutableStatements;
+public static class DirectlyExecutableStatementValidator
 {
     public static bool Validate(ReadOnlySpan<char> command)
     {
@@ -14,10 +13,10 @@ public static class DDLStatementValidator
 
         return firstToken switch
         {
-            "create" => true,
-            "alter" => AlterValidator.Validate(command[6..]),
-            "set" => OptionNamespaceValidator.Validate(command[4..]),
-            _ => DirectlyExecutableStatementValidator.Validate(command)
+            "select" => true,
+            "with" => WithValidator.Validate(command),
+            _ => false
         };
+
     }
 }
