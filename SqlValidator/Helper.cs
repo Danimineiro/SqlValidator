@@ -34,7 +34,7 @@ public static class Helper
     {
         if (TryGetNextToken(input, out ReadOnlySpan<char> next))
         {
-            remaining = input[next.Length..];
+            remaining = input.TrimStart()[next.Length..];
             return next.Equals(token, StringComparison.OrdinalIgnoreCase);
         }
 
