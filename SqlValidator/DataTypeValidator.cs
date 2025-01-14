@@ -41,38 +41,36 @@ public class DataTypeValidator
         SQLTypeModifier modifier = Types[typeName];
         if (!ValidateTypeModifier(afterSimpleDataType, modifier, out ReadOnlySpan<char> afterTypeModifier))
         {
+            if (modifier == SQLTypeModifier.NONE && afterTypeModifier.StartsWith('('))
+            {
+                remaining = command;
+                return false;
+            }
             remaining = command;
-            return false;
         }
 
         if (!ValidateArray(afterTypeModifier, out ReadOnlySpan<char> afterArray))
         {
             remaining = command;
-            return false;
         }
 
         remaining = afterArray;
         return true;
     }
 
-    private static bool ValidateSimpleDataType(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining, out SQLTypeName typeName)
+    public static bool ValidateSimpleDataType(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining, out SQLTypeName typeName)
     {
-        ReadOnlySpan<char> temp = command.TrimStart();
-        Span<Range> ranges = new Range[2];
-        command.SplitAny(ranges, " [(", StringSplitOptions.RemoveEmptyEntries);
-        temp = command[ranges[0]];
-        if (!Enum.TryParse(temp, true, out SQLTypeName sqlTypeName))
+        if (!Helper.GetNextWord(command, out ReadOnlySpan<char> sqlType, out remaining) ||
+            !Enum.TryParse(sqlType, true, out typeName))
         {
-            typeName = (SQLTypeName)(-1);
             remaining = command;
+            typeName = (SQLTypeName)(-1);
             return false;
         }
-        typeName = sqlTypeName;
-        remaining = command[ranges[1]].TrimStart();
         return true;
     }
 
-    private static bool ValidateTypeModifier(ReadOnlySpan<char> command, SQLTypeModifier modifier, out ReadOnlySpan<char> remaining)
+    public static bool ValidateTypeModifier(ReadOnlySpan<char> command, SQLTypeModifier modifier, out ReadOnlySpan<char> remaining)
     {
         return modifier switch
         {
@@ -83,10 +81,10 @@ public class DataTypeValidator
         };
     }
 
-    private static bool ValidateNoTypeModifier(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
+    public static bool ValidateNoTypeModifier(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
     {
-        ReadOnlySpan<char> temp = command.TrimStart();
-        if (temp.IsEmpty || temp.StartsWith('('))
+        if (Helper.GetNextWord(command, out ReadOnlySpan<char> word, out ReadOnlySpan<char> _) ||
+            word.Length == 1 && word[0] == '(')
         {
             remaining = command;
             return false;
@@ -95,38 +93,90 @@ public class DataTypeValidator
         return true;
     }
 
-    private static bool ValidateLengthTypeModifier(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
+    public static bool ValidateLengthTypeModifier(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
     {
-        ReadOnlySpan<char> temp = command.TrimStart();
-        if (temp.IsEmpty)
+        bool gotOpen = Helper.GetNextWord(command, out ReadOnlySpan<char> open, out ReadOnlySpan<char> afterOpen);
+        if (!gotOpen || open.Length >= 1 && open[0] != '(')
+        {
+            remaining = command;
+            return true;
+        }
+        if (!Helper.GetNextWord(afterOpen, out ReadOnlySpan<char> length, out ReadOnlySpan<char> afterLength) || !uint.TryParse(length, out uint _) ||
+            !Helper.GetNextWord(afterLength, out ReadOnlySpan<char> close, out ReadOnlySpan<char> afterClose) || close.Length != 1 || close[0] != ')')
         {
             remaining = command;
             return false;
         }
-        if (temp.StartsWith('('))
+        remaining = afterClose;
+        return true;
+    }
+
+    public static bool ValidatePrecisionAndLengthModifier(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
+    {
+        bool gotOpen = Helper.GetNextWord(command, out ReadOnlySpan<char> open, out ReadOnlySpan<char> afterOpen);
+        if (!gotOpen || open.Length >= 1 && open[0] != '(')
         {
-            temp = temp[1..].TrimStart();
-            if (!uint.TryParse(temp, out uint typeLength))
-            {
-                remaining = command;
-                return false;
-            }
-            temp = temp[typeLength]
+            remaining = command;
+            return true;
         }
+        if (!Helper.GetNextWord(afterOpen, out ReadOnlySpan<char> num1, out ReadOnlySpan<char> afterNum1) || !uint.TryParse(num1, out uint _))
+        {
+            remaining = command;
+            return false;
+        }
+        if (Helper.GetNextWord(afterNum1, out ReadOnlySpan<char> commaOrClose, out ReadOnlySpan<char> afterCommaOrClose) && commaOrClose.Length == 1)
+        {
+            switch (commaOrClose[0])
+            {
+                case ')':
+                    remaining = afterCommaOrClose;
+                    return true;
+
+                case ',':
+                    break;
+
+                default:
+                    remaining = command;
+                    return false;
+            }
+        }
+        if (!Helper.GetNextWord(afterCommaOrClose, out ReadOnlySpan<char> length, out ReadOnlySpan<char> afterLength) || !uint.TryParse(length, out uint _) ||
+            !Helper.GetNextWord(afterLength, out ReadOnlySpan<char> close, out ReadOnlySpan<char> afterClose) || close.Length != 1 || close[0] != ')')
+        {
+            remaining = command;
+            return false;
+        }
+        remaining = afterClose;
+        return true;
     }
 
-    private static bool ValidatePrecisionAndLengthModifier(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
+    public static bool ValidateArray(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
     {
-
-    }
-
-    private static bool ValidateArray(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
-    {
-
+        ReadOnlySpan<char> temp = command;
+        while (true)
+        {
+            if (Helper.GetNextWord(temp, out ReadOnlySpan<char> open, out ReadOnlySpan<char> afterOpen) && open.Length == 1 && open[0] == '[')
+            {
+                if (Helper.GetNextWord(afterOpen, out ReadOnlySpan<char> close, out ReadOnlySpan<char> afterClose) && close.Length == 1 && close[0] == ']')
+                {
+                    temp = afterClose;
+                }
+                else
+                {
+                    remaining = command;
+                    return true;
+                }
+            }
+            else
+            {
+                remaining = temp;
+                return true;
+            }
+        }
     }
 }
 
-internal enum SQLTypeName
+public enum SQLTypeName
 {
     STRING,
     VARCHAR,
@@ -156,7 +206,7 @@ internal enum SQLTypeName
     XML
 }
 
-internal enum SQLTypeModifier
+public enum SQLTypeModifier
 {
     NONE,
     LENGTH,
