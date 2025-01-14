@@ -19,7 +19,7 @@ public static class AlterValidator
             if (CheckForTableViewProcedure(remainingCommand, out remaining))
             {
                 remainingCommand = remaining;
-                if (IdentifierValidator.Validate(remainingCommand, out remaining))
+                if (Helper.isNextTokenIdentifier(remainingCommand, out remaining))
                 {
                     remainingCommand = remaining;
                     if (AlterOptionsValidator.Validate(remainingCommand) || AlterColumnValidator.Validate(remainingCommand))
@@ -38,7 +38,7 @@ public static class AlterValidator
         } else if(CheckForTableViewProcedure(command, out remaining))
         {
             remainingCommand = remaining;
-            if (IdentifierValidator.Validate(remainingCommand, out remaining))
+            if (Helper.isNextTokenIdentifier(remainingCommand, out remaining))
             {
                 remainingCommand = remaining;
                 if (AlterOptionsValidator.Validate(remainingCommand) || AlterColumnValidator.Validate(remainingCommand))
@@ -77,4 +77,5 @@ public static class AlterValidator
         }
         return false;
     }
+
 }

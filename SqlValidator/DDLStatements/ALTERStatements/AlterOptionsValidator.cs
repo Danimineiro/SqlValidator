@@ -21,44 +21,43 @@ public static class AlterOptionsValidator
         }
 
         remainingCommand = remaining;
-        if (remainingCommand is not ['(', .., ')'])
+        if (remainingCommand.TrimStart() is not ['(', .., ')'])
         {
             return false;
         }
         while (!allOptionsCovered)
         {
-            remainingCommand = remainingCommand[1..];
+            int remainingLength = remainingCommand.Length - 2;
+            remainingCommand = remainingCommand.TrimStart()[1..remainingLength];
             if (CheckForAddSet(remainingCommand, out remaining))
             {
                 remainingCommand = remaining;
-                if (IdentifierValidator.Validate(remainingCommand, out remaining))
+                if (Helper.isNextTokenIdentifier(remainingCommand, out remaining))
                 {
                     remainingCommand = remaining;
+                    // NUMERIC OR NON NUMERIC LITERAL
+                    if (Helper.isNextTokenNumeric(remainingCommand, out remaining))
+                    {
+                        remainingCommand = remaining;
+                        if (!Helper.HasNextToken(remainingCommand, ",", out remaining))
+                        {
+                            remainingCommand = remaining;
+                            allOptionsCovered = true;
+                        }
+                    }
                 }
 
             }
             else if (Helper.HasNextToken(remainingCommand, "DROP", out remaining))
             {
                 remainingCommand = remaining;
-                if (IdentifierValidator.Validate(remainingCommand, out remaining))
-                {
-                    remainingCommand = remaining;
-                }
-            }
-            else
-            {
-                return false;
-            }
-            if (IdentifierValidator.Validate(remainingCommand, out remaining))
-            {
-                remainingCommand = remaining;
-                if (Helper.isNextTokenNumeric(remainingCommand, out remaining))
+                if (Helper.isNextTokenIdentifier(remainingCommand, out remaining))
                 {
                     remainingCommand = remaining;
                     if (!Helper.HasNextToken(remainingCommand, ",", out remaining))
                     {
                         remainingCommand = remaining;
-                        return true;
+                        allOptionsCovered = true;
                     }
                 }
             }
@@ -84,4 +83,6 @@ public static class AlterOptionsValidator
         }
         return false;
     }
+
+    
 }
