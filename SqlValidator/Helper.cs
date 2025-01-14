@@ -42,6 +42,18 @@ public static class Helper
         return false;
     }
 
+    public static bool isNextTokenNumeric(this ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    {
+        if (TryGetNextToken(input, out ReadOnlySpan<char> next))
+        {
+            remaining = input[next.Length..];
+            return float.TryParse(next, out _);
+        }
+
+        remaining = [];
+        return false;
+    }
+
     public static bool TryGetNextToken(this ReadOnlySpan<char> input, out ReadOnlySpan<char> token)
     {
         input = input.TrimStart();
