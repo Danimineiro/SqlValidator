@@ -17,7 +17,7 @@ public static class Helper
             return !input.IsWhiteSpace();
         }
 
-        ReadOnlySpan<char> longestResult = [];
+        ReadOnlySpan<char> longestResult = default;
         for (int i = 0; i < tokens.Length; i++)
         {
             if (input.HasNextToken(tokens[i], out ReadOnlySpan<char> token) && token.Length > longestResult.Length)
@@ -45,49 +45,58 @@ public static class Helper
     public static bool TryGetNextToken(this ReadOnlySpan<char> input, out ReadOnlySpan<char> token)
     {
         input = input.TrimStart();
-        if (input.Length < 2) 
+        if (input.Length < 2)
         {
             token = input;
-            return true; 
+            return true;
         }
 
-        switch (input[0]) 
+        switch (input[0])
         {
             case char character when character is '\'' or '"':
-                
+
                 for (int i = 1; i < input.Length; i++)
                 {
-                    if (input[i] != character) continue;
-
-                    if (++i < input.Length)
+                    if (input[i] == character && (i + 1 == input.Length || char.IsWhiteSpace(input[i + 1])))
                     {
-                        if (input[i] == character) continue;
-                        if (!char.IsWhiteSpace(input[i])) 
-                        {
-                            token = [];
-                            return false; 
-                        }
+                        token = input[..(i + 1)];
+                        return true;
                     }
+                    /*
+                                            if (++i < input.Length)
+                                            {
+                                                if (input[i] == character) continue;
+                                                if (!char.IsWhiteSpace(input[i]))
+                                                {
+                                                    token = [];
+                                                    return false;
+                                                }
+                                            }
 
-                    token = input[..i];
-                    return true;
+                                        token = input[..i];
+                                        return true;*/
                 }
 
                 // Bad input
-                token = [];
-                return false; 
+                token = default;
+                return false;
 
             case '[':
-                token = input[..(input.IndexOf(']') + 1)];
-                return true;
+                int endIndex = input.IndexOf(']');
+                if (endIndex != -1)
+                {
+                    token = input[..(endIndex + 1)];
+                    return true;
+                }
+                token = default; return false;
 
             default:
                 int tokenEnd = input.IndexOf(' ');
 
-                if (tokenEnd == -1) 
+                if (tokenEnd == -1)
                 {
                     token = input;
-                    return true; 
+                    return true;
                 }
 
                 token = input[..tokenEnd];
