@@ -42,4 +42,13 @@ public class NextTokenTests
 
         Assert.False("Set Namespace".AsSpan().HasNextToken("NAMESPACE", out _));
     }
+
+    [Fact]
+    public void HasAnyNextToken()
+    {
+        Assert.True("Set Namespace".AsSpan().HasAnyNextToken(out ReadOnlySpan<char> remaining, "Set", "Create", "Namespace"));
+        Assert.Equal(" Namespace", remaining);
+
+        Assert.False("Set Namespace".AsSpan().HasAnyNextToken(out _, "NAMESPACE"));
+    }
 }

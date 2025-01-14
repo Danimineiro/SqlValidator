@@ -1,18 +1,44 @@
-﻿namespace SqlValidator;
+﻿using static System.Net.Mime.MediaTypeNames;
+
+namespace SqlValidator;
 public static class Helper
 {
     internal static bool SqlStartsWith(this ReadOnlySpan<char> command, string start)
         => command.StartsWith(start, StringComparison.OrdinalIgnoreCase);
 
+    public static bool HasAnyNextToken(this ReadOnlySpan<char> input, ReadOnlySpan<string> tokens, out ReadOnlySpan<char> remaining)
+        => HasAnyNextToken(input, out remaining, tokens);
+
+    public static bool HasAnyNextToken(this ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining, params ReadOnlySpan<string> tokens)
+    {
+        if (tokens.IsEmpty)
+        {
+            remaining = input;
+            return !input.IsWhiteSpace();
+        }
+
+        ReadOnlySpan<char> longestResult = [];
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            if (input.HasNextToken(tokens[i], out ReadOnlySpan<char> token) && token.Length > longestResult.Length)
+            {
+                longestResult = tokens[i];
+            }
+        }
+
+        remaining = input[longestResult.Length..];
+        return !longestResult.IsEmpty;
+    }
+
     public static bool HasNextToken(this ReadOnlySpan<char> input, ReadOnlySpan<char> token, out ReadOnlySpan<char> remaining)
     {
         if (TryGetNextToken(input, out ReadOnlySpan<char> next))
         {
-            remaining = input[next.Length..];
+            remaining = input.TrimStart()[next.Length..];
             return next.Equals(token, StringComparison.OrdinalIgnoreCase);
         }
 
-        remaining = [];
+        remaining = input;
         return false;
     }
 
