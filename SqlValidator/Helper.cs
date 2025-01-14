@@ -46,7 +46,7 @@ public static class Helper
     {
         if (TryGetNextToken(input, out ReadOnlySpan<char> next))
         {
-            remaining = input.TrimStart()[next.Length..];
+            remaining = input.TrimStart()[next.Length..].TrimStart();
             return next.Equals(token, StringComparison.OrdinalIgnoreCase);
         }
 
