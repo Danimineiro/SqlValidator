@@ -11,14 +11,14 @@ public static class AlterColumnValidator
     public static bool Validate(ReadOnlySpan<char> command) {
         ReadOnlySpan<char> remainingCommand = command;
         ReadOnlySpan<char> remaining = [];
-        if(Helper.HasNextToken("ALTER", remainingCommand, out remaining))
+        if(Helper.HasNextToken(remainingCommand, "ALTER", out remaining))
         {
             remainingCommand = remaining;
-            if (Helper.HasNextToken("COLUMN", remainingCommand, out remaining))
+            if (Helper.HasNextToken(remainingCommand, "COLUMN", out remaining))
             {
                 remainingCommand = remaining;
             }
-            else if (Helper.HasNextToken("PARAMETER", remainingCommand, out remaining))
+            else if (Helper.HasNextToken(remainingCommand, "PARAMETER", out remaining))
             {
                 remainingCommand = remaining;
             } else

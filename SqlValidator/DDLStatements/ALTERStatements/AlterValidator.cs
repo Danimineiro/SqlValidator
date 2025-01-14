@@ -51,15 +51,15 @@ public static class AlterValidator
     }
 
     private static bool CheckForTableViewProcedure(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining) {
-        if(Helper.HasNextToken("TABLE", command, out remaining))
+        if(Helper.HasNextToken(command, "TABLE", out remaining))
         {
             return true;
         }
-        if (Helper.HasNextToken("FOR", command, out remaining))            
+        if (Helper.HasNextToken(command, "PROCEDURE", out remaining))            
         {
             return true;
         }
-        if (Helper.HasNextToken("VIEW", command, out remaining))
+        if (Helper.HasNextToken(command, "VIEW", out remaining))
         {
             return true;
         }
@@ -67,11 +67,11 @@ public static class AlterValidator
     }
     private static bool CheckForVirtualOrForeign(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
     {
-        if (Helper.HasNextToken("VIRTUAL", command, out remaining))
+        if (Helper.HasNextToken(command, "VIRTUAL", out remaining))
         {
             return true;
         }
-        if (Helper.HasNextToken("FOREIGN", command, out remaining))
+        if (Helper.HasNextToken(command, "FOREIGN", out remaining))
         {
             return true;
         }
