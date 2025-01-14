@@ -1,6 +1,5 @@
-
-using SqlValidator.DirectlyExecutableStatements.QueryExpressions;
 using SqlValidator.Identifiers;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SqlValidator;
 
@@ -140,8 +139,20 @@ public static class Helper
     {
         if (TryGetNextToken(input, out ReadOnlySpan<char> next))
         {
-            remaining = input[next.Length..];
+            remaining = input.TrimStart()[next.Length..];
             return float.TryParse(next, out _);
+        }
+
+        remaining = [];
+        return false;
+    }
+
+    internal static bool isNextTokenIdentifier(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    {
+        if (TryGetNextToken(input, out ReadOnlySpan<char> next))
+        {
+            remaining = input.TrimStart()[next.Length..];
+            return IdentifierValidator.Validate(next, out _);
         }
 
         remaining = [];
@@ -175,11 +186,12 @@ public static class Helper
                         }
                         if (input[i] == ',')
                         {
-                            if(i > 1)
+                            if (i > 1)
                             {
-                                token = input[..(i-1)];
+                                token = input[..(i - 1)];
                                 return true;
-                            } else
+                            }
+                            else
                             {
                                 token = [];
                                 return false;
@@ -238,8 +250,8 @@ public static class Helper
             word = "";
             rest = "";
             return false;
-        }    
-        switch(temp[0])
+        }
+        switch (temp[0])
         {
             case '\'':
                 return GetNextQuote('\'', input, temp, out word, out rest);
