@@ -1,4 +1,5 @@
 ﻿using SqlValidator.DirectlyExecutableStatements.QueryExpressions;
+using SqlValidator.DirectlyExecutableStatements.QueryExpressions.With;
 
 namespace SqlValidator.DirectlyExecutableStatements;
 public static class DirectlyExecutableStatementValidator
@@ -13,7 +14,7 @@ public static class DirectlyExecutableStatementValidator
 
         return firstToken switch
         {
-            "select" => true,
+            "select" => QueryExpressionBodyValidator.Validate(command, out _),
             "with" => WithValidator.Validate(command),
             _ => false
         };
