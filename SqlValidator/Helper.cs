@@ -1,6 +1,3 @@
-﻿using SqlValidator.Identifiers;
-using static System.Net.Mime.MediaTypeNames;
-
 namespace SqlValidator;
 public static class Helper
 {
@@ -27,8 +24,14 @@ public static class Helper
             }
         }
 
+        if (longestResult.IsEmpty)
+        {
+            remaining = input;
+            return false;
+        }
+
         remaining = input[longestResult.Length..];
-        return !longestResult.IsEmpty;
+        return true;
     }
 
     /// <summary>
@@ -92,14 +95,18 @@ public static class Helper
                 {
                     if (input[i] == character && (i + 1 == input.Length || char.IsWhiteSpace(input[i + 1])))
                     {
-                        token = input[..(i + 1)];
-                        return true;
+                        if (input[i] == character) continue;
+                        if (!char.IsWhiteSpace(input[i]))
+                        {
+                            token = [];
+                            return false;
+                        }
                     }
 
                 }
 
                 // Bad input
-                token = default;
+                token = [];
                 return false;
 
             case '[':
