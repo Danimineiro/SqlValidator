@@ -30,6 +30,14 @@ public static class Helper
         return !longestResult.IsEmpty;
     }
 
+    /// <summary>
+    ///     Check if the given <paramref name="input"/>'s first token is equivalent the same as <paramref name="token"/>, ignoring capitalization.
+    ///     If the <paramref name="token"/> is present, returns <c>true</c>, removing and leading whitespace and the given <paramref name="token"/> from the start of <paramref name="input"/> as <paramref name="remaining"/>
+    /// </summary>
+    /// <param name="input">the string to check</param>
+    /// <param name="token">the token to search</param>
+    /// <param name="remaining"><paramref name="input"/>, if <paramref name="token"/> was not present, otherwise <paramref name="input"/> with <paramref name="token"/> removed from the start</param>
+    /// <returns><c>true</c> if the <paramref name="token"/> could be found, <c>false</c> otherwise.</returns>
     public static bool HasNextToken(this ReadOnlySpan<char> input, ReadOnlySpan<char> token, out ReadOnlySpan<char> remaining)
     {
         if (TryGetNextToken(input, out ReadOnlySpan<char> next))
