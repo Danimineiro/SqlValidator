@@ -5,12 +5,8 @@ public static class UnsignedIntegerLiteralValidator
 {
     public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> remainder)
     {
-        remainder = input.TrimStart();
-        if (input.Length < 1)
-        {
-            remainder = input;
-            return false;
-        }
+        remainder = input;
+        if (input.Length < 1 || !DigitValidator.Validate(remainder[0])) return false;
 
         while (DigitValidator.Validate(remainder[0]))
         {
