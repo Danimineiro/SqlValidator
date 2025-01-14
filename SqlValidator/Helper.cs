@@ -1,6 +1,3 @@
-using SqlValidator.Identifiers;
-using static System.Net.Mime.MediaTypeNames;
-
 namespace SqlValidator;
 
 public static class Helper
@@ -183,19 +180,6 @@ public static class Helper
                         {
                             token = [];
                             return false;
-                        }
-                        if (input[i] == ',')
-                        {
-                            if (i > 1)
-                            {
-                                token = input[..(i - 1)];
-                                return true;
-                            }
-                            else
-                            {
-                                token = [];
-                                return false;
-                            }
                         }
                     }
 
