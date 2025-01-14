@@ -1,5 +1,9 @@
 ﻿using SqlValidator.DDLStatements.ALTERStatements;
 
+using SqlValidator.DirectlyExecutableStatements;
+
+using SqlValidator.ALTERStatements;
+
 namespace SqlValidator.DDLStatements;
 
 public static class DDLStatementValidator
@@ -17,7 +21,7 @@ public static class DDLStatementValidator
             "create" => true,
             "alter" => AlterValidator.Validate(command[6..]),
             "set" => OptionNamespaceValidator.Validate(command[4..]),
-            _ => false
+            _ => DirectlyExecutableStatementValidator.Validate(command)
         };
     }
 }

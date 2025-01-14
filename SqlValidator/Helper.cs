@@ -1,7 +1,8 @@
+
 ﻿using SqlValidator.Identifiers;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SqlValidator;
+
 public static class Helper
 {
     internal static bool SqlStartsWith(this ReadOnlySpan<char> command, string start)
@@ -27,15 +28,29 @@ public static class Helper
             }
         }
 
+        if (longestResult.IsEmpty)
+        {
+            remaining = input;
+            return false;
+        }
+
         remaining = input[longestResult.Length..];
-        return !longestResult.IsEmpty;
+        return true;
     }
 
+    /// <summary>
+    ///     Check if the given <paramref name="input"/>'s first token is equivalent the same as <paramref name="token"/>, ignoring capitalization.
+    ///     If the <paramref name="token"/> is present, returns <c>true</c>, removing and leading whitespace and the given <paramref name="token"/> from the start of <paramref name="input"/> as <paramref name="remaining"/>
+    /// </summary>
+    /// <param name="input">the string to check</param>
+    /// <param name="token">the token to search</param>
+    /// <param name="remaining"><paramref name="input"/>, if <paramref name="token"/> was not present, otherwise <paramref name="input"/> with <paramref name="token"/> removed from the start</param>
+    /// <returns><c>true</c> if the <paramref name="token"/> could be found, <c>false</c> otherwise.</returns>
     public static bool HasNextToken(this ReadOnlySpan<char> input, ReadOnlySpan<char> token, out ReadOnlySpan<char> remaining)
     {
         if (TryGetNextToken(input, out ReadOnlySpan<char> next))
         {
-            remaining = input.TrimStart()[next.Length..];
+            remaining = input.TrimStart()[next.Length..].TrimStart();
             return next.Equals(token, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -70,16 +85,16 @@ public static class Helper
     public static bool TryGetNextToken(this ReadOnlySpan<char> input, out ReadOnlySpan<char> token)
     {
         input = input.TrimStart();
-        if (input.Length < 2) 
+        if (input.Length < 2)
         {
             token = input;
-            return true; 
+            return true;
         }
 
-        switch (input[0]) 
+        switch (input[0])
         {
             case char character when character is '\'' or '"':
-                
+
                 for (int i = 1; i < input.Length; i++)
                 {
                     if (input[i] != character) continue;
@@ -87,10 +102,10 @@ public static class Helper
                     if (++i < input.Length)
                     {
                         if (input[i] == character) continue;
-                        if (!char.IsWhiteSpace(input[i])) 
+                        if (!char.IsWhiteSpace(input[i]))
                         {
                             token = [];
-                            return false; 
+                            return false;
                         }
                     }
 
@@ -100,7 +115,7 @@ public static class Helper
 
                 // Bad input
                 token = [];
-                return false; 
+                return false;
 
             case '[':
                 token = input[..(input.IndexOf(']') + 1)];
@@ -109,10 +124,10 @@ public static class Helper
             default:
                 int tokenEnd = input.IndexOf(' ');
 
-                if (tokenEnd == -1) 
+                if (tokenEnd == -1)
                 {
                     token = input;
-                    return true; 
+                    return true;
                 }
 
                 token = input[..tokenEnd];
