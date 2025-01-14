@@ -1,4 +1,5 @@
-﻿using static System.Net.Mime.MediaTypeNames;
+﻿using SqlValidator.Identifiers;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SqlValidator;
 public static class Helper
@@ -46,8 +47,20 @@ public static class Helper
     {
         if (TryGetNextToken(input, out ReadOnlySpan<char> next))
         {
-            remaining = input[next.Length..];
+            remaining = input.TrimStart()[next.Length..];
             return float.TryParse(next, out _);
+        }
+
+        remaining = [];
+        return false;
+    }
+
+    internal static bool isNextTokenIdentifier(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    {
+        if (TryGetNextToken(input, out ReadOnlySpan<char> next))
+        {
+            remaining = input.TrimStart()[next.Length..];
+            return IdentifierValidator.Validate(next, out _);
         }
 
         remaining = [];
