@@ -38,7 +38,7 @@ public static class Helper
             return next.Equals(token, StringComparison.OrdinalIgnoreCase);
         }
 
-        remaining = [];
+        remaining = input;
         return false;
     }
 
