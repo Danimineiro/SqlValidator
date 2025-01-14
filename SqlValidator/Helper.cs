@@ -62,19 +62,7 @@ public static class Helper
                         token = input[..(i + 1)];
                         return true;
                     }
-                    /*
-                                            if (++i < input.Length)
-                                            {
-                                                if (input[i] == character) continue;
-                                                if (!char.IsWhiteSpace(input[i]))
-                                                {
-                                                    token = [];
-                                                    return false;
-                                                }
-                                            }
 
-                                        token = input[..i];
-                                        return true;*/
                 }
 
                 // Bad input
