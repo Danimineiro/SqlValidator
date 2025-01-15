@@ -1,52 +1,40 @@
 ﻿using SqlValidator.Identifiers;
-using System.Globalization;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SqlValidator.DDLStatements;
-internal class CreateProcedureValidator
+public class CreateProcedureValidator
 {
     public static bool Validate(ReadOnlySpan<char> command)
     {
-        // CREATE
-        ReadOnlySpan<char> remaining = command;
-        if (!remaining.SqlStartsWith("CREATE"))
+        if (!Helper.GetNextWord(command, out ReadOnlySpan<char> word, out ReadOnlySpan<char> rest) || !word.SqlEquals("create"))
         {
             return false;
         }
-
-        // ( VIRTUAL | FOREIGN )?
-        remaining = remaining[6..];
-        if (remaining.SqlStartsWith("VIRTUAL") || remaining.SqlStartsWith("FOREIGN"))
-        {
-            remaining = remaining[7..];
-        }
-
-        // ( PROCEDURE | FUNCTION )
-        if (remaining.SqlStartsWith("PROCEDURE"))
-        {
-            remaining = remaining[9..];
-        }
-        else if (remaining.SqlStartsWith("FUNCTION"))
-        {
-            remaining = remaining[8..];
-        }
-        else
+        if (!Helper.GetNextWord(rest, out word, out rest))
         {
             return false;
         }
-
+        if (word.SqlEquals("virtual") || word.SqlEquals("foreign"))
+        {
+            if (!Helper.GetNextWord(rest, out word, out rest) || !word.SqlEquals("procedure") && !word.SqlEquals("function"))
+            {
+                return false;
+            }
+        }
+        else if (!word.SqlEquals("procedure") && !word.SqlEquals("function"))
+        {
+            return false;
+        }
         // <identifier>
-        if (!QuotedIdValidator.Validate(remaining, out remaining))
+        if (!QuotedIdValidator.Validate(rest, out rest))
         {
             return false;
         }
         // <lparen>
-        if (!remaining.StartsWith('('))
+        if (!Helper.GetNextWord(rest, out word, out rest) || word.Length != 1 || word[0] != '(')
         {
             return false;
         }
-        remaining = remaining[1..];
-
+        /*
         // ( <procedure parameter> ( <comma> <procedure parameter> )* )?
         // <procedure parameter>
         if (ValidateProcedureParameter(remaining, out remaining))
