@@ -58,7 +58,7 @@ public static class Helper
         ReadOnlySpan<char> longestResult = [];
         for (int i = 0; i < tokens.Length; i++)
         {
-            if (input.HasNextToken(tokens[i], out ReadOnlySpan<char> token) && token.Length > longestResult.Length)
+            if (input.HasNextToken(tokens[i], out ReadOnlySpan<char> _) && tokens[i].Length > longestResult.Length)
             {
                 longestResult = tokens[i];
             }
