@@ -26,16 +26,15 @@ public static class AlterOptionsValidator
         }
         while (!allOptionsCovered)
         {
-            int remainingLength = remainingCommand.Length - 2;
+            int remainingLength = remainingCommand.Length - 1;
             remainingCommand = remainingCommand.TrimStart()[1..remainingLength];
             if (CheckForAddSet(remainingCommand, out remaining))
             {
                 remainingCommand = remaining;
-                if (Helper.isNextTokenIdentifier(remainingCommand, out remaining))
+                if (Helper.IsNextTokenIdentifier(remainingCommand, out remaining))
                 {
                     remainingCommand = remaining;
-                    // NUMERIC OR NON NUMERIC LITERAL
-                    if (Helper.isNextTokenNumeric(remainingCommand, out remaining))
+                    if (Helper.IsNextTokenNumeric(remainingCommand, out remaining) || Helper.IsNextTokenNonNumericLiteral(remainingCommand, out remaining))
                     {
                         remainingCommand = remaining;
                         if (!Helper.HasNextToken(remainingCommand, ",", out remaining))
@@ -50,7 +49,7 @@ public static class AlterOptionsValidator
             else if (Helper.HasNextToken(remainingCommand, "DROP", out remaining))
             {
                 remainingCommand = remaining;
-                if (Helper.isNextTokenIdentifier(remainingCommand, out remaining))
+                if (Helper.IsNextTokenIdentifier(remainingCommand, out remaining))
                 {
                     remainingCommand = remaining;
                     if (!Helper.HasNextToken(remainingCommand, ",", out remaining))
@@ -66,7 +65,7 @@ public static class AlterOptionsValidator
             }
 
         }
-        return false;
+        return true;
     }
 
 
