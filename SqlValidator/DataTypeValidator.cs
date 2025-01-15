@@ -1,73 +1,182 @@
 ﻿namespace SqlValidator;
-internal class DataTypeValidator
+public class DataTypeValidator
 {
-    private static readonly Dictionary<SQLTypeNames, SQLTypeLengthMode> Types = new() {
-        { SQLTypeNames.STRING, SQLTypeLengthMode.SIMPLE },
-        { SQLTypeNames.VARCHAR, SQLTypeLengthMode.SIMPLE },
-        { SQLTypeNames.BOOLEAN, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.BYTE, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.TINYINT, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.SHORT, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.SMALLINT, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.CHAR, SQLTypeLengthMode.SIMPLE },
-        { SQLTypeNames.INTEGER, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.LONG, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.BIGINT, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.BIGINTEGER,SQLTypeLengthMode.SIMPLE },
-        { SQLTypeNames.FLOAT, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.REAL, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.DOUBLE, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.BIGDECIMAL,SQLTypeLengthMode.DOUBLE },
-        { SQLTypeNames.DECIMAL, SQLTypeLengthMode.DOUBLE },
-        { SQLTypeNames.DATE, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.TIME, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.TIMESTAMP, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.OBJECT, SQLTypeLengthMode.SIMPLE },
-        { SQLTypeNames.BLOB, SQLTypeLengthMode.SIMPLE },
-        { SQLTypeNames.CLOB, SQLTypeLengthMode.SIMPLE },
-        { SQLTypeNames.VARBINARY, SQLTypeLengthMode.SIMPLE },
-        { SQLTypeNames.GEOMETRY, SQLTypeLengthMode.NONE },
-        { SQLTypeNames.XML, SQLTypeLengthMode.NONE }
+    private static readonly Dictionary<SQLTypeName, SQLTypeModifier> Types = new() {
+        { SQLTypeName.STRING, SQLTypeModifier.LENGTH },
+        { SQLTypeName.VARCHAR, SQLTypeModifier.LENGTH },
+        { SQLTypeName.BOOLEAN, SQLTypeModifier.NONE },
+        { SQLTypeName.BYTE, SQLTypeModifier.NONE },
+        { SQLTypeName.TINYINT, SQLTypeModifier.NONE },
+        { SQLTypeName.SHORT, SQLTypeModifier.NONE },
+        { SQLTypeName.SMALLINT, SQLTypeModifier.NONE },
+        { SQLTypeName.CHAR, SQLTypeModifier.LENGTH },
+        { SQLTypeName.INTEGER, SQLTypeModifier.NONE },
+        { SQLTypeName.LONG, SQLTypeModifier.NONE },
+        { SQLTypeName.BIGINT, SQLTypeModifier.NONE },
+        { SQLTypeName.BIGINTEGER,SQLTypeModifier.LENGTH },
+        { SQLTypeName.FLOAT, SQLTypeModifier.NONE },
+        { SQLTypeName.REAL, SQLTypeModifier.NONE },
+        { SQLTypeName.DOUBLE, SQLTypeModifier.NONE },
+        { SQLTypeName.BIGDECIMAL,SQLTypeModifier.PRECISION_AND_LENGTH },
+        { SQLTypeName.DECIMAL, SQLTypeModifier.PRECISION_AND_LENGTH },
+        { SQLTypeName.DATE, SQLTypeModifier.NONE },
+        { SQLTypeName.TIME, SQLTypeModifier.NONE },
+        { SQLTypeName.TIMESTAMP, SQLTypeModifier.NONE },
+        { SQLTypeName.OBJECT, SQLTypeModifier.LENGTH },
+        { SQLTypeName.BLOB, SQLTypeModifier.LENGTH },
+        { SQLTypeName.CLOB, SQLTypeModifier.LENGTH },
+        { SQLTypeName.VARBINARY, SQLTypeModifier.LENGTH },
+        { SQLTypeName.GEOMETRY, SQLTypeModifier.NONE },
+        { SQLTypeName.XML, SQLTypeModifier.NONE }
     };
 
     public static bool Validate(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
     {
-        remaining = command;
-        Span<Range> ranges = new Range[2];
-        command.SplitAny(ranges, " [(", StringSplitOptions.RemoveEmptyEntries);
-        ReadOnlySpan<char> temp = command[ranges[0]];
-        if (!Enum.TryParse(temp, true, out SQLTypeNames sqlTypeName))
+        if (!ValidateSimpleDataType(command, out ReadOnlySpan<char> afterSimpleDataType, out SQLTypeName typeName))
         {
+            remaining = command;
             return false;
         }
-        SQLTypeLengthMode typeLengthMode = Types[sqlTypeName];
-        temp = command[ranges[1]].TrimStart();
-        if (temp.Length == 0)
+
+        SQLTypeModifier modifier = Types[typeName];
+        if (!ValidateTypeModifier(afterSimpleDataType, modifier, out ReadOnlySpan<char> afterTypeModifier))
         {
-            remaining = string.Empty;
-            return true;
-        }
-        switch (typeLengthMode)
-        {
-            case SQLTypeLengthMode.NONE:
-                if (temp[0] == '(')
-                {
-                    return false;
-                }
-                break;
-            case SQLTypeLengthMode.SIMPLE:
-                break;
-            case SQLTypeLengthMode.DOUBLE:
-                break;
-            default:
-                throw new Exception($"Invalid enum value of (SQLTypeLengthMode){(int)typeLengthMode}");
+            if (modifier == SQLTypeModifier.NONE && afterTypeModifier.StartsWith('('))
+            {
+                remaining = command;
+                return false;
+            }
+            remaining = command;
         }
 
-        throw new NotImplementedException();
+        if (!ValidateArray(afterTypeModifier, out ReadOnlySpan<char> afterArray))
+        {
+            remaining = command;
+        }
+
+        remaining = afterArray;
+        return true;
+    }
+
+    public static bool ValidateSimpleDataType(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining, out SQLTypeName typeName)
+    {
+        if (!Helper.GetNextWord(command, out ReadOnlySpan<char> sqlType, out remaining) ||
+            !Enum.TryParse(sqlType, true, out typeName))
+        {
+            remaining = command;
+            typeName = (SQLTypeName)(-1);
+            return false;
+        }
+        return true;
+    }
+
+    public static bool ValidateTypeModifier(ReadOnlySpan<char> command, SQLTypeModifier modifier, out ReadOnlySpan<char> remaining)
+    {
+        return modifier switch
+        {
+            SQLTypeModifier.NONE => ValidateNoTypeModifier(command, out remaining),
+            SQLTypeModifier.LENGTH => ValidateLengthTypeModifier(command, out remaining),
+            SQLTypeModifier.PRECISION_AND_LENGTH => ValidatePrecisionAndLengthModifier(command, out remaining),
+            _ => throw new Exception($"Invalid enum value of ({nameof(SQLTypeModifier)}){(int)modifier}")
+        };
+    }
+
+    public static bool ValidateNoTypeModifier(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
+    {
+        if (Helper.GetNextWord(command, out ReadOnlySpan<char> word, out ReadOnlySpan<char> _) ||
+            word.Length == 1 && word[0] == '(')
+        {
+            remaining = command;
+            return false;
+        }
+        remaining = command;
+        return true;
+    }
+
+    public static bool ValidateLengthTypeModifier(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
+    {
+        bool gotOpen = Helper.GetNextWord(command, out ReadOnlySpan<char> open, out ReadOnlySpan<char> afterOpen);
+        if (!gotOpen || open.Length >= 1 && open[0] != '(')
+        {
+            remaining = command;
+            return true;
+        }
+        if (!Helper.GetNextWord(afterOpen, out ReadOnlySpan<char> length, out ReadOnlySpan<char> afterLength) || !uint.TryParse(length, out uint _) ||
+            !Helper.GetNextWord(afterLength, out ReadOnlySpan<char> close, out ReadOnlySpan<char> afterClose) || close.Length != 1 || close[0] != ')')
+        {
+            remaining = command;
+            return false;
+        }
+        remaining = afterClose;
+        return true;
+    }
+
+    public static bool ValidatePrecisionAndLengthModifier(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
+    {
+        bool gotOpen = Helper.GetNextWord(command, out ReadOnlySpan<char> open, out ReadOnlySpan<char> afterOpen);
+        if (!gotOpen || open.Length >= 1 && open[0] != '(')
+        {
+            remaining = command;
+            return true;
+        }
+        if (!Helper.GetNextWord(afterOpen, out ReadOnlySpan<char> num1, out ReadOnlySpan<char> afterNum1) || !uint.TryParse(num1, out uint _))
+        {
+            remaining = command;
+            return false;
+        }
+        if (Helper.GetNextWord(afterNum1, out ReadOnlySpan<char> commaOrClose, out ReadOnlySpan<char> afterCommaOrClose) && commaOrClose.Length == 1)
+        {
+            switch (commaOrClose[0])
+            {
+                case ')':
+                    remaining = afterCommaOrClose;
+                    return true;
+
+                case ',':
+                    break;
+
+                default:
+                    remaining = command;
+                    return false;
+            }
+        }
+        if (!Helper.GetNextWord(afterCommaOrClose, out ReadOnlySpan<char> length, out ReadOnlySpan<char> afterLength) || !uint.TryParse(length, out uint _) ||
+            !Helper.GetNextWord(afterLength, out ReadOnlySpan<char> close, out ReadOnlySpan<char> afterClose) || close.Length != 1 || close[0] != ')')
+        {
+            remaining = command;
+            return false;
+        }
+        remaining = afterClose;
+        return true;
+    }
+
+    public static bool ValidateArray(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
+    {
+        ReadOnlySpan<char> temp = command;
+        while (true)
+        {
+            if (Helper.GetNextWord(temp, out ReadOnlySpan<char> open, out ReadOnlySpan<char> afterOpen) && open.Length == 1 && open[0] == '[')
+            {
+                if (Helper.GetNextWord(afterOpen, out ReadOnlySpan<char> close, out ReadOnlySpan<char> afterClose) && close.Length == 1 && close[0] == ']')
+                {
+                    temp = afterClose;
+                }
+                else
+                {
+                    remaining = command;
+                    return true;
+                }
+            }
+            else
+            {
+                remaining = temp;
+                return true;
+            }
+        }
     }
 }
 
-internal enum SQLTypeNames
+public enum SQLTypeName
 {
     STRING,
     VARCHAR,
@@ -97,9 +206,9 @@ internal enum SQLTypeNames
     XML
 }
 
-internal enum SQLTypeLengthMode
+public enum SQLTypeModifier
 {
     NONE,
-    SIMPLE,
-    DOUBLE
+    LENGTH,
+    PRECISION_AND_LENGTH
 }
