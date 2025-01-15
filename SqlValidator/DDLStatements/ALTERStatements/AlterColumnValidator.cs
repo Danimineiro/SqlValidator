@@ -31,7 +31,7 @@ public static class AlterColumnValidator
         {
             return false;
         }
-        if (Helper.isNextTokenIdentifier(remainingCommand, out remaining))
+        if (Helper.IsNextTokenIdentifier(remainingCommand, out remaining))
         {
             remainingCommand = remaining;
             if (AlterOptionsValidator.Validate(remainingCommand))
