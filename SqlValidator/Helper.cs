@@ -1,5 +1,6 @@
 
-﻿using SqlValidator.Identifiers;
+using SqlValidator.DirectlyExecutableStatements.QueryExpressions;
+using SqlValidator.Identifiers;
 
 namespace SqlValidator;
 
@@ -58,7 +59,7 @@ public static class Helper
         return false;
     }
 
-    public static bool isNextTokenNumeric(this ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    public static bool IsNextTokenNumeric(this ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
     {
         if (TryGetNextToken(input, out ReadOnlySpan<char> next))
         {
@@ -70,7 +71,20 @@ public static class Helper
         return false;
     }
 
-    internal static bool isNextTokenIdentifier(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    // Not Implemented
+    public static bool IsNextTokenNonNumericLiteral(this ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    {
+        if (TryGetNextToken(input, out ReadOnlySpan<char> next))
+        {
+            remaining = input.TrimStart()[next.Length..];
+            return NonNumericLiteralValidator.Validate(next, out _);
+        }
+
+        remaining = [];
+        return false;
+    }
+
+    internal static bool IsNextTokenIdentifier(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
     {
         if (TryGetNextToken(input, out ReadOnlySpan<char> next))
         {
@@ -106,6 +120,18 @@ public static class Helper
                         {
                             token = [];
                             return false;
+                        }
+                        if (input[i] == ',')
+                        {
+                            if(i > 1)
+                            {
+                                token = input[..(i-1)];
+                                return true;
+                            } else
+                            {
+                                token = [];
+                                return false;
+                            }
                         }
                     }
 
