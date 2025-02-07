@@ -18,22 +18,19 @@ public static class CreateTriggerValidator
             Console.WriteLine("Error: Missing 'TRIGGER' keyword.");
             return false;
         }
-        Console.WriteLine("first");
 
         if (!remaining.TrimStart().HasNextToken("ON", out remaining))
         {
             Console.WriteLine("Error: Missing 'ON' keyword.");
             return false;
         }
-        Console.WriteLine("second");
+        remaining = remaining.TrimStart();
 
         if (!IdentifierValidator.Validate(remaining, out remaining))
         {
             Console.WriteLine("Invalid identifier for trigger target.");
             return false;
         }
-
-        remaining = remaining.TrimStart();
 
         if (!remaining.TrimStart().HasNextToken("INSTEAD", out remaining))
         {
@@ -63,23 +60,45 @@ public static class CreateTriggerValidator
         }
 
 
-        if (!remaining.TrimStart().HasNextToken("FOR EACH ROW", out remaining))
+        if (!remaining.TrimStart().HasNextToken("FOR", out remaining))
         {
-            Console.WriteLine("Error: Missing 'FOR EACH ROW' keyword.");
+            Console.WriteLine("Error: Missing 'FOR' keyword.");
             return false;
 
         }
-        Console.WriteLine("Found 'FOR EACH ROW' keyword.");
 
-        remaining = remaining.TrimStart();
-
-
-        if (!remaining.StartsWith("BEGIN ATOMIC"))
+        if (!remaining.TrimStart().HasNextToken("EACH", out remaining))
         {
-            Console.WriteLine("Error: Expected 'BEGIN ATOMIC' after 'FOR EACH ROW'.");
+            Console.WriteLine("Error: Missing 'EACH' keyword.");
+            return false;
+
+        }
+
+        if (!remaining.TrimStart().HasNextToken("ROW", out remaining))
+        {
+            Console.WriteLine("Error: Missing 'ROW' keyword.");
+            return false;
+
+        }
+
+        if (!remaining.TrimStart().HasNextToken("BEGIN", out remaining))
+        {
+            Console.WriteLine("Error: Expected 'BEGIN' after 'FOR EACH ROW'.");
             return false;
         }
-        Console.WriteLine("Found 'BEGIN ATOMIC' keyword.");
+
+        if (!remaining.TrimStart().HasNextToken("ATOMIC", out remaining))
+        {
+            Console.WriteLine("Error: Expected 'ATOMIC' after 'FOR EACH ROW'.");
+            return false;
+        }
+
+        if (remaining.TrimStart().IndexOf("END", StringComparison.Ordinal) == -1)
+        {
+            Console.WriteLine("Error: Missing 'END' to close the trigger action'.");
+            return false;
+        }
+
 
         Console.WriteLine("Validation passed!");
         return true;
