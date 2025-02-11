@@ -9,7 +9,7 @@ public class BooleanValueExpressionValidator
             Error("Could not validate boolean term.");
             return false;
         }
-        while (Helper.GetNextWord(afterTerm, out ReadOnlySpan<char> @or, out ReadOnlySpan<char> afterOr) && @or.SqlEquals("or"))
+        while (Helper.HasNextSqlWord(afterTerm, out ReadOnlySpan<char> afterOr, "or"))
         {
             if (!BooleanTermValidator.Validate(afterOr, out afterTerm))
             {

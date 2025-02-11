@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SqlValidator.DDLStatements.GeneralItemValidators;
+﻿namespace SqlValidator.DDLStatements.GeneralItemValidators;
 public class BooleanTermValidator
 {
     public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest)
@@ -15,9 +9,9 @@ public class BooleanTermValidator
             Error("Could not validate boolean factor.");
             return false;
         }
-        while (Helper.GetNextWord(afterTerm, out ReadOnlySpan<char> @or, out ReadOnlySpan<char> afterOr) && @or.SqlEquals("or"))
+        while (Helper.HasNextSqlWord(afterTerm, out ReadOnlySpan<char> afterAnd, "and"))
         {
-            if (!BooleanFactorValidator.Validate(afterOr, out afterTerm))
+            if (!BooleanFactorValidator.Validate(afterAnd, out afterTerm))
             {
                 rest = afterTerm;
                 Error("Could not validate boolean factor.");

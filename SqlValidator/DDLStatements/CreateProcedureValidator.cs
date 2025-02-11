@@ -1,15 +1,17 @@
-﻿using SqlValidator.Identifiers;
+﻿using SqlValidator.DDLStatements.GeneralItemValidators;
+using SqlValidator.DDLStatements.ProcedureItemValidators;
+using SqlValidator.Identifiers;
 
 namespace SqlValidator.DDLStatements;
 public class CreateProcedureValidator
 {
     public static bool Validate(ReadOnlySpan<char> command)
     {
-        if (!Helper.GetNextWord(command, out ReadOnlySpan<char> word, out ReadOnlySpan<char> rest) || !word.SqlEquals("create"))
+        if (!Helper.HasNextSqlWord(command, out ReadOnlySpan<char> rest, "create"))
         {
             return false;
         }
-        if (!Helper.GetNextWord(rest, out word, out rest))
+        if (!Helper.GetNextWord(rest, out ReadOnlySpan<char> word, out rest))
         {
             return false;
         }
@@ -24,153 +26,69 @@ public class CreateProcedureValidator
         {
             return false;
         }
-        // <identifier>
         if (!QuotedIdValidator.Validate(rest, out rest))
         {
             return false;
         }
-        // <lparen>
-        if (!Helper.GetNextWord(rest, out word, out rest) || word.Length != 1 || word[0] != '(')
+        if (!Helper.HasNextSpecialChar(rest, out rest, '('))
         {
             return false;
         }
-        /*
-        // ( <procedure parameter> ( <comma> <procedure parameter> )* )?
-        // <procedure parameter>
-        if (ValidateProcedureParameter(remaining, out remaining))
+        if (ProcedureParameterValidator.Validate(rest, out rest))
         {
-            // ( <comma> <procedure parameter> )*
-            while (true)
+            while (Helper.HasNextSpecialChar(rest, out rest, ','))
             {
-                // <comma>
-                if (!remaining.StartsWith(','))
-                {
-                    break;
-                }
-                // <procedure parameter>
-                if (!ValidateProcedureParameter(remaining, out remaining))
+                if (!ProcedureParameterValidator.Validate(rest, out rest))
                 {
                     return false;
                 }
             }
         }
-        // <rparen>
-        if (!remaining.StartsWith(')'))
+        if (!Helper.HasNextSpecialChar(rest, out rest, ')'))
         {
             return false;
         }
-        remaining = remaining[1..];
-        // ( RETURNS ( <options clause> )? ( ( ( TABLE )? <lparen> <procedure result column> ( <comma> <procedure result column> )* <rparen> ) | <data type> ) )?
-        // RETURNS
-        if (remaining.StartsWith("RETURNS"))
+        if (!Helper.HasNextSqlWord(rest, out rest, "returns"))
         {
-            remaining = remaining[7..];
-            // ( <options clause> )?
-            int previousLength = remaining.Length;
-            bool result = ValidateOptionsClause(remaining, out remaining);
-            if (remaining.Length < previousLength && !result)
+            return ValidateEndOfCommand(rest);
+        }
+        OptionsClauseValidator.Validate(rest, out rest);
+        if (DataTypeValidator.Validate(rest, out rest))
+        {
+            return ValidateEndOfCommand(rest);
+        }
+        Helper.HasNextSqlWord(rest, out rest, "table");
+        if (!Helper.HasNextSpecialChar(rest, out rest, '('))
+        {
+            return false;
+        }
+        if (!ProcedureResultColumnValidator.Validate(rest, out rest))
+        {
+            return false;
+        }
+        while (Helper.HasNextSpecialChar(rest, out rest, ','))
+        {
+            if (!ProcedureResultColumnValidator.Validate(rest, out rest))
             {
                 return false;
             }
-
-            // ( ( ( TABLE )? <lparen> <procedure result column> ( <comma> <procedure result column>)* <rparen> ) | <data type> )
-            // <data type>
-            if (ValidateDataType(remaining, out remaining))
-            {
-
-            }
-            // ( ( TABLE )? <lparen> <procedure result column> ( <comma> <procedure result column>)* <rparen> )
-            else
-            {
-                remaining.SqlStartsWith("TABLE", out remaining);
-                if (!remaining.StartsWith('('))
-                {
-                    return false;
-                }
-                remaining = remaining[1..];
-
-            }
         }
-        /*
-         *      (
-         *          RETURNS
-         *          ...
-         *          (
-         *              (
-         *                  (
-         *                      TABLE
-         *                  )?
-         *                  <lparen>
-         *                  <procedure result column>
-         *                  (
-         *                      <comma>
-         *                      <procedure result column>
-         *                  )*
-         *                  <rparen>
-         *              )
-         *              | <data type>
-         *          )
-         *      )?
-         *      (
-         *          <options clause>
-         *      )?
-         *      (
-         *          AS <statement>
-         *      )?
-         *  )
-         */
-
-        return true;
-    }
-
-    private static bool ValidateProcedureParameter(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
-    {
-        throw new NotImplementedException();
-    }
-
-    private static bool ValidateOptionsClause(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
-    {
-        throw new NotImplementedException();
-    }
-
-    private static bool ValidateDataType(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
-    {
-        throw new NotImplementedException();
-
-        // validate types without array length indicator
-        string[] typesWithoutLength = [
-            "BOOLEAN",
-            "BYTE", "TINYINT", "SHORT", "SMALLINT", "INTEGER", "LONG", "BIGINT",
-            "FLOAT", "REAL", "DOUBLE",
-            "DATE", "TIME", "TIMESTAMP",
-            "GEOMETRY", "XML"
-        ];
-        string[] typesWithLength = [
-            "STRING", "VARCHAR", "CHAR",
-            "BIGINTEGER",
-            "OBJECT", "BLOB", "CLOB", "VARBINARY"
-        ];
-        string[] typesWithComplicatedLength = [
-            "BIGDECIMAL", "DECIMAL"
-        ];
-        if (!command.SqlStartsWithAny(typesWithoutLength, out remaining))
+        if (!Helper.HasNextSpecialChar(rest, out rest, ')'))
         {
             return false;
         }
+        return ValidateEndOfCommand(rest);
     }
 
-    private static bool ValidateProcedureResultColumn(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
+    private static bool ValidateEndOfCommand(ReadOnlySpan<char> input)
     {
-        remaining = command;
-        throw new NotImplementedException();
-        if (!IdentifierValidator.Validate(command, out remaining))
+        if (string.IsNullOrWhiteSpace(input.ToString()))
         {
-            return false;
+            return true;
         }
-        if (!ValidateDataType(command, out remaining))
+        else
         {
-            return false;
+            return Helper.HasNextSpecialChar(input, out ReadOnlySpan<char> rest, ';') && string.IsNullOrWhiteSpace(rest.ToString());
         }
-
     }
 }

@@ -192,6 +192,26 @@ public static class Helper
         return true;
     }
 
+    public static bool HasNextSpecialChar(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest, char exectedChar)
+    {
+        if (GetNextWord(input, out ReadOnlySpan<char> word, out rest) && word.Length == 1 && word[0] == exectedChar)
+        {
+            return true;
+        }
+        rest = input;
+        return false;
+    }
+
+    public static bool HasNextSqlWord(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest, ReadOnlySpan<char> expectedWord)
+    {
+        if (GetNextWord(input, out ReadOnlySpan<char> word, out rest) && word.SqlEquals(expectedWord))
+        {
+            return true;
+        }
+        rest = input;
+        return false;
+    }
+
     private static bool GetNextQuote(char quoteChar, ReadOnlySpan<char> input, ReadOnlySpan<char> temp, out ReadOnlySpan<char> word, out ReadOnlySpan<char> rest)
     {
         int i = 1;

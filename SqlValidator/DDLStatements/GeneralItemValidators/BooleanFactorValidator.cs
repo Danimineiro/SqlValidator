@@ -4,7 +4,7 @@ public class BooleanFactorValidator
     public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest)
     {
         ReadOnlySpan<char> afterPrimary;
-        if (Helper.GetNextWord(input, out ReadOnlySpan<char> @not, out ReadOnlySpan<char> afterNot) && @not.SqlEquals("not"))
+        if (Helper.HasNextSqlWord(input, out ReadOnlySpan<char> afterNot, "not"))
         {
             if (!BooleanPrimaryValidator.Validate(afterNot, out afterPrimary))
             {
