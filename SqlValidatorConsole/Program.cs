@@ -7,6 +7,7 @@ internal class Program
     static void Main()
     {
         Console.WriteLine("Enter a sql statement to test:");
+
         string? command;
         while (true)
         {
@@ -15,8 +16,8 @@ internal class Program
                 Console.WriteLine("Something went wrong, please try again:");
                 continue;
             }
-
-            command = input;
+            
+            command = input + Console.In.ReadToEnd();
             break;
         }
 

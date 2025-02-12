@@ -1,10 +1,14 @@
-﻿namespace SqlValidator.DDLStatements;
+﻿using SqlValidator.DDLStatements.ALTERStatements;
+
+using SqlValidator.DirectlyExecutableStatements;
+
+namespace SqlValidator.DDLStatements;
 
 public static class DDLStatementValidator
 {
     public static bool Validate(ReadOnlySpan<char> command)
     {
-        Span<Range> ranges = new Range[3];
+        Span<Range> ranges = new Range[2];
         command.Split(ranges, ' ', StringSplitOptions.RemoveEmptyEntries);
 
         Span<char> firstToken = new char[ranges[0].End.Value];
@@ -12,21 +16,10 @@ public static class DDLStatementValidator
 
         return firstToken switch
         {
-            "create" => /*CreateTableValidator.Validate(command) || */CreateTriggerValidator.Validate(command),
-            "alter" => true,
+            "create" => true,
+            "alter" => AlterValidator.Validate(command[6..]),
             "set" => OptionNamespaceValidator.Validate(command[4..]),
-            _ => false
-
+            _ => DirectlyExecutableStatementValidator.Validate(command)
         };
     }
-
-    /* private static bool ValidateCreateCommand(ReadOnlySpan<char> command)
-     {
-         if (command.Slice(0, 13).Equals("CREATE TRIGGER", StringComparison.OrdinalIgnoreCase))
-         {
-             return CreateTriggerValidator.Validate(command);
-
-         }
-         return CreateTableValidator.Validate(command);
-     }*/
 }
