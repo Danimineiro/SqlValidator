@@ -77,7 +77,7 @@ public class DataTypeValidator_Tests
     [InlineData(true, "DECIMAL", "")]
     [InlineData(true, "DECIMAL(40)", "")]
     [InlineData(true, "DECIMAL(20,30)", "")]
-    [InlineData(false, "DECIMAL(3, 4, 5 ), ", "DECIMAL(3, 4, 5 )")]
+    [InlineData(false, "DECIMAL(3, 4, 5 ), ", "DECIMAL(3, 4, 5 ), ")]
     [InlineData(true, "   DECIMAL   (  62    ,      5    )   SQL is overrated and you won't convince me otherwise.", "   SQL is overrated and you won't convince me otherwise.")]
     [InlineData(true, "       BIGDECIMAL    (  43    ,     14     )         Hello", "         Hello")]
     public void Test_WithPrecisionAndLength(bool expected, string input, string expectedRest)

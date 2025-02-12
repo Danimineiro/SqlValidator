@@ -1,8 +1,53 @@
-﻿namespace SqlValidator;
+
+using SqlValidator.DirectlyExecutableStatements.QueryExpressions;
+using SqlValidator.Identifiers;
+
+namespace SqlValidator;
+
 public static class Helper
 {
     public static bool SqlStartsWith(this ReadOnlySpan<char> command, string start)
         => command.StartsWith(start, StringComparison.OrdinalIgnoreCase);
+
+    public static bool SqlStartsWith(this ReadOnlySpan<char> command, string start, out ReadOnlySpan<char> remaining)
+    {
+        if (command.SqlStartsWith(start))
+        {
+            remaining = command[start.Length..];
+            return true;
+        }
+        remaining = command;
+        return false;
+    }
+
+    public static bool SqlStartsWithAny(this ReadOnlySpan<char> command, string[] starts)
+    {
+        foreach (string start in starts)
+        {
+            if (command.SqlStartsWith(start))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static bool SqlStartsWithAny(this ReadOnlySpan<char> command, string[] starts, out ReadOnlySpan<char> remaining)
+    {
+        foreach (string start in starts)
+        {
+            if (command.SqlStartsWith(start))
+            {
+                remaining = command[start.Length..];
+                return true;
+            }
+        }
+        remaining = command;
+        return false;
+    }
+
+    public static bool SqlEquals(this ReadOnlySpan<char> string1, ReadOnlySpan<char> string2)
+        => string1.Equals(string2, StringComparison.OrdinalIgnoreCase);
 
     public static bool HasAnyNextToken(this ReadOnlySpan<char> input, ReadOnlySpan<string> tokens, out ReadOnlySpan<char> remaining)
         => HasAnyNextToken(input, out remaining, tokens);
@@ -54,6 +99,43 @@ public static class Helper
         return false;
     }
 
+    public static bool IsNextTokenNumeric(this ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    {
+        if (TryGetNextToken(input, out ReadOnlySpan<char> next))
+        {
+            remaining = input.TrimStart()[next.Length..];
+            return float.TryParse(next, out _);
+        }
+
+        remaining = [];
+        return false;
+    }
+
+    // Not Implemented
+    public static bool IsNextTokenNonNumericLiteral(this ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    {
+        if (TryGetNextToken(input, out ReadOnlySpan<char> next))
+        {
+            remaining = input.TrimStart()[next.Length..];
+            return NonNumericLiteralValidator.Validate(next, out _);
+        }
+
+        remaining = [];
+        return false;
+    }
+
+    internal static bool IsNextTokenIdentifier(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    {
+        if (TryGetNextToken(input, out ReadOnlySpan<char> next))
+        {
+            remaining = input.TrimStart()[next.Length..];
+            return IdentifierValidator.Validate(next, out _);
+        }
+
+        remaining = [];
+        return false;
+    }
+
     public static bool TryGetNextToken(this ReadOnlySpan<char> input, out ReadOnlySpan<char> token)
     {
         input = input.TrimStart();
@@ -78,6 +160,18 @@ public static class Helper
                         {
                             token = [];
                             return false;
+                        }
+                        if (input[i] == ',')
+                        {
+                            if(i > 1)
+                            {
+                                token = input[..(i-1)];
+                                return true;
+                            } else
+                            {
+                                token = [];
+                                return false;
+                            }
                         }
                     }
 
@@ -105,43 +199,6 @@ public static class Helper
                 token = input[..tokenEnd];
                 return true;
         }
-    }
-
-    internal static bool SqlStartsWith(this ReadOnlySpan<char> command, string start, out ReadOnlySpan<char> remaining)
-    {
-        if (command.SqlStartsWith(start))
-        {
-            remaining = command[start.Length..];
-            return true;
-        }
-        remaining = command;
-        return false;
-    }
-
-    public static bool SqlStartsWithAny(this ReadOnlySpan<char> command, string[] starts)
-    {
-        foreach (string start in starts)
-        {
-            if (command.SqlStartsWith(start))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static bool SqlStartsWithAny(this ReadOnlySpan<char> command, string[] starts, out ReadOnlySpan<char> remaining)
-    {
-        foreach (string start in starts)
-        {
-            if (command.SqlStartsWith(start))
-            {
-                remaining = command[start.Length..];
-                return true;
-            }
-        }
-        remaining = command;
-        return false;
     }
 
     public static int IntLog10(int x)
@@ -201,6 +258,26 @@ public static class Helper
         word = temp[..1];
         rest = temp[1..];
         return true;
+    }
+
+    public static bool HasNextSpecialChar(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest, char exectedChar)
+    {
+        if (GetNextWord(input, out ReadOnlySpan<char> word, out rest) && word.Length == 1 && word[0] == exectedChar)
+        {
+            return true;
+        }
+        rest = input;
+        return false;
+    }
+
+    public static bool HasNextSqlWord(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest, ReadOnlySpan<char> expectedWord)
+    {
+        if (GetNextWord(input, out ReadOnlySpan<char> word, out rest) && word.SqlEquals(expectedWord))
+        {
+            return true;
+        }
+        rest = input;
+        return false;
     }
 
     private static bool GetNextQuote(char quoteChar, ReadOnlySpan<char> input, ReadOnlySpan<char> temp, out ReadOnlySpan<char> word, out ReadOnlySpan<char> rest)

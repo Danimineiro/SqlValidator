@@ -41,12 +41,8 @@ public class DataTypeValidator
         SQLTypeModifier modifier = Types[typeName];
         if (!ValidateTypeModifier(afterSimpleDataType, modifier, out ReadOnlySpan<char> afterTypeModifier))
         {
-            if (modifier == SQLTypeModifier.NONE && afterTypeModifier.StartsWith('('))
-            {
-                remaining = command;
-                return false;
-            }
             remaining = command;
+            return false;
         }
 
         if (!ValidateArray(afterTypeModifier, out ReadOnlySpan<char> afterArray))
@@ -83,7 +79,7 @@ public class DataTypeValidator
 
     public static bool ValidateNoTypeModifier(ReadOnlySpan<char> command, out ReadOnlySpan<char> remaining)
     {
-        if (Helper.GetNextWord(command, out ReadOnlySpan<char> word, out ReadOnlySpan<char> _) ||
+        if (Helper.GetNextWord(command, out ReadOnlySpan<char> word, out ReadOnlySpan<char> _) &&
             word.Length == 1 && word[0] == '(')
         {
             remaining = command;
