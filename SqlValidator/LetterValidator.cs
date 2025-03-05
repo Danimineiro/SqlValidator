@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Diagnostics;
 
 namespace SqlValidator;
 public static class LetterValidator
@@ -20,6 +21,6 @@ public static class LetterValidator
 
     public static bool ValidateLetters(ReadOnlySpan<char> chars)
     {
-        return chars.ContainsAnyExcept(SearchValues);
+        return !chars.ContainsAnyExcept(SearchValues);
     }
 }
