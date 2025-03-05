@@ -1,15 +1,15 @@
 ﻿namespace SqlValidator.DDLStatements.GeneralItemValidators;
 public class BooleanTermValidator
 {
-    public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest)
+    public static bool Validate(ROStr input, out ROStr rest)
     {
-        if (!BooleanFactorValidator.Validate(input, out ReadOnlySpan<char> afterTerm))
+        if (!BooleanFactorValidator.Validate(input, out ROStr afterTerm))
         {
             rest = input;
             Error("Could not validate boolean factor.");
             return false;
         }
-        while (Helper.HasNextSqlWord(afterTerm, out ReadOnlySpan<char> afterAnd, "and"))
+        while (Helper.HasNextSqlWord(afterTerm, out ROStr afterAnd, "and"))
         {
             if (!BooleanFactorValidator.Validate(afterAnd, out afterTerm))
             {

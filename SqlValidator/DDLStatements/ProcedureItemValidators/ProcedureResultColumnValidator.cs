@@ -4,9 +4,9 @@ using SqlValidator.Identifiers;
 namespace SqlValidator.DDLStatements.ProcedureItemValidators;
 internal class ProcedureResultColumnValidator
 {
-    internal static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    internal static bool Validate(ROStr input, out ROStr remaining)
     {
-        if (!IdentifierValidator.Validate(input, out ReadOnlySpan<char> rest))
+        if (!IdentifierValidator.Validate(input, out ROStr rest))
         {
             remaining = input;
             return false;

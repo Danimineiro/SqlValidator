@@ -1,9 +1,10 @@
 ﻿namespace SqlValidator.DDLStatements.GeneralItemValidators;
 internal class OptionsClauseValidator
 {
-    public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest)
+    public static bool Validate(ROStr input, out ROStr rest)
     {
         rest = input;
-        return true;
+#warning OptionsClauseValidator has not been implemented yet.
+        return false;
     }
 }

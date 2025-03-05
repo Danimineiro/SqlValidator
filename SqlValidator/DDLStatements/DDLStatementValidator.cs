@@ -16,7 +16,7 @@ public static class DDLStatementValidator
 
         return firstToken switch
         {
-            "create" => true,
+            "create" => CreateProcedureValidator.Validate(command),
             "alter" => AlterValidator.Validate(command[6..]),
             "set" => OptionNamespaceValidator.Validate(command[4..]),
             _ => DirectlyExecutableStatementValidator.Validate(command)

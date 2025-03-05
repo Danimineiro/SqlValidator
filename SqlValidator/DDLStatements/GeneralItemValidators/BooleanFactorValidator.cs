@@ -1,10 +1,10 @@
 ﻿namespace SqlValidator.DDLStatements.GeneralItemValidators;
 public class BooleanFactorValidator
 {
-    public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest)
+    public static bool Validate(ROStr input, out ROStr rest)
     {
-        ReadOnlySpan<char> afterPrimary;
-        if (Helper.HasNextSqlWord(input, out ReadOnlySpan<char> afterNot, "not"))
+        ROStr afterPrimary;
+        if (Helper.HasNextSqlWord(input, out ROStr afterNot, "not"))
         {
             if (!BooleanPrimaryValidator.Validate(afterNot, out afterPrimary))
             {

@@ -124,9 +124,9 @@ public static class Helper
         return false;
     }
 
-    internal static bool IsNextTokenIdentifier(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
+    internal static bool IsNextTokenIdentifier(ROStr input, out ROStr remaining)
     {
-        if (TryGetNextToken(input, out ReadOnlySpan<char> next))
+        if (TryGetNextToken(input, out ROStr next))
         {
             remaining = input.TrimStart()[next.Length..];
             return IdentifierValidator.Validate(next, out _);
@@ -136,7 +136,7 @@ public static class Helper
         return false;
     }
 
-    public static bool TryGetNextToken(this ReadOnlySpan<char> input, out ReadOnlySpan<char> token)
+    public static bool TryGetNextToken(this ROStr input, out ROStr token)
     {
         input = input.TrimStart();
         if (input.Length < 2)
@@ -218,9 +218,9 @@ public static class Helper
         return log;
     }
 
-    public static bool GetNextWord(ReadOnlySpan<char> input, out ReadOnlySpan<char> word, out ReadOnlySpan<char> rest)
+    public static bool GetNextWord(ROStr input, out ROStr word, out ROStr rest)
     {
-        ReadOnlySpan<char> temp = input.TrimStart();
+        ROStr temp = input.TrimStart();
         if (temp.Length == 0)
         {
             word = "";
@@ -260,9 +260,29 @@ public static class Helper
         return true;
     }
 
-    public static bool HasNextSpecialChar(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest, char exectedChar)
+    public static bool HasNextSingleChar(ROStr input, out ROStr rest, char expectedChar)
     {
-        if (GetNextWord(input, out ReadOnlySpan<char> word, out rest) && word.Length == 1 && word[0] == exectedChar)
+        var temp = input.TrimStart();
+        if (temp.Length > 0 && temp[0] == expectedChar)
+        {
+            rest = temp[1..];
+            return true;
+        }
+        rest = input;
+        return false;
+    }
+
+    /// <summary>
+    /// <see langword="WARNING!"/><br/><br/>
+    /// This method uses<br/>
+    /// <see cref="GetNextWord(ReadOnlySpan{char}, out ReadOnlySpan{char}, out ReadOnlySpan{char})"/><br/>
+    /// so it cannot recognize single-quotes (') as single special characters.<br/><br/>
+    /// If you just want to know if the next character is a single-quote, use<br/>
+    /// <see cref="HasNextSingleChar(ReadOnlySpan{char}, out ReadOnlySpan{char}, char)"/><br/>instead.
+    /// </summary>
+    public static bool HasNextSpecialChar(ROStr input, out ROStr rest, char exectedChar)
+    {
+        if (GetNextWord(input, out ROStr word, out rest) && word.Length == 1 && word[0] == exectedChar)
         {
             return true;
         }
@@ -270,9 +290,9 @@ public static class Helper
         return false;
     }
 
-    public static bool HasNextSqlWord(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest, ReadOnlySpan<char> expectedWord)
+    public static bool HasNextSqlWord(ROStr input, out ROStr rest, ROStr expectedWord)
     {
-        if (GetNextWord(input, out ReadOnlySpan<char> word, out rest) && word.SqlEquals(expectedWord))
+        if (GetNextWord(input, out ROStr word, out rest) && word.SqlEquals(expectedWord))
         {
             return true;
         }
@@ -280,7 +300,7 @@ public static class Helper
         return false;
     }
 
-    private static bool GetNextQuote(char quoteChar, ReadOnlySpan<char> input, ReadOnlySpan<char> temp, out ReadOnlySpan<char> word, out ReadOnlySpan<char> rest)
+    private static bool GetNextQuote(char quoteChar, ROStr input, ROStr temp, out ROStr word, out ROStr rest)
     {
         int i = 1;
         for (; i < temp.Length; i++)

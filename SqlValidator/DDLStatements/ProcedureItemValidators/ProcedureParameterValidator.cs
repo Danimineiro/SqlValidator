@@ -4,10 +4,10 @@ using SqlValidator.Identifiers;
 namespace SqlValidator.DDLStatements.ProcedureItemValidators;
 public class ProcedureParameterValidator
 {
-    public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> rest)
+    public static bool Validate(ROStr input, out ROStr rest)
     {
-        ReadOnlySpan<char> afterIdentifier;
-        if (Helper.GetNextWord(input, out ReadOnlySpan<char> ioiv, out ReadOnlySpan<char> afterIoiv) &&
+        ROStr afterIdentifier;
+        if (Helper.GetNextWord(input, out ROStr ioiv, out ROStr afterIoiv) &&
             (ioiv.SqlEquals("in") || ioiv.SqlEquals("out") || ioiv.SqlEquals("inout") || ioiv.SqlEquals("variadic")))
         {
             if (!IdentifierValidator.Validate(afterIoiv, out afterIdentifier))
@@ -26,16 +26,16 @@ public class ProcedureParameterValidator
                 return false;
             }
         }
-        if (!DataTypeValidator.Validate(afterIdentifier, out ReadOnlySpan<char> afterType))
+        if (!DataTypeValidator.Validate(afterIdentifier, out ROStr afterType))
         {
             rest = input;
             Error("Could not validate data type.");
             return false;
         }
-        bool result = Helper.GetNextWord(afterType, out ReadOnlySpan<char> word, out ReadOnlySpan<char> afterWord);
+        bool result = Helper.GetNextWord(afterType, out ROStr word, out ROStr afterWord);
         if (result && word.SqlEquals("not"))
         {
-            if (!Helper.GetNextWord(afterWord, out ReadOnlySpan<char> @null, out afterWord) || !@null.SqlEquals("null"))
+            if (!Helper.GetNextWord(afterWord, out ROStr @null, out afterWord) || !@null.SqlEquals("null"))
             {
                 rest = input;
                 Error("Missing 'NULL' after 'NOT'.");
