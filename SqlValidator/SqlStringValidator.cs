@@ -5,10 +5,16 @@ public static class SqlStringValidator
     {
         remaining = input;
         if (input[0] != '\'')
-            return false;
+        {
+            Console.WriteLine($"String must start with \"'\", but got \"{input[0]}\" instead.");
+            return false; 
+        }
 
         if (input.Length < 2)
-            return false;
+        {
+            Console.WriteLine($"String must end with \"'\", but got nothing instead.");
+            return false; 
+        }
 
         for (int i = 1; i < input.Length; i++)
         {
@@ -31,6 +37,7 @@ public static class SqlStringValidator
             return true;
         }
 
+        Console.WriteLine($"String must end with \"'\", but got nothing instead.");
         return false;
     }
 }
