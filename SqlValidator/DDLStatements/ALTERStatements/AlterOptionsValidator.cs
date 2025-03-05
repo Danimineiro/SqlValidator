@@ -10,19 +10,24 @@ public static class AlterOptionsValidator
 {
     private static bool allOptionsCovered = false;
 
-    public static bool Validate(ReadOnlySpan<char> command)
+    public static bool Validate(ReadOnlySpan<char> command, out String errorLine)
     {
         ReadOnlySpan<char> remaining = [];
         ReadOnlySpan<char> remainingCommand = command;
+        ReadOnlySpan<char> nextToken;
+        errorLine = "";
 
         if (!Helper.HasNextToken(remainingCommand, "OPTIONS", out remaining))
         {
+            Helper.TryGetNextToken(remainingCommand, out nextToken);
+            errorLine = "Expected 'OPTIONS' but got: " + nextToken.ToString();
             return false;
         }
 
         remainingCommand = remaining;
         if (remainingCommand.TrimStart() is not ['(', .., ')'])
         {
+            errorLine = "Missing either closing or opening parantheses for OPTIONS";
             return false;
         }
         while (!allOptionsCovered)
@@ -43,7 +48,17 @@ public static class AlterOptionsValidator
                             remainingCommand = remaining;
                             allOptionsCovered = true;
                         }
+                    } else
+                    {
+                        Helper.TryGetNextToken(remainingCommand, out nextToken);
+                        errorLine = "Expected a numeric token but got: " + nextToken.ToString();
+                        return false;
                     }
+                } else
+                {
+                    Helper.TryGetNextToken(remainingCommand, out nextToken);
+                    errorLine = "Expected an identifier but got: " + nextToken.ToString();
+                    return false;
                 }
 
             }
@@ -58,14 +73,22 @@ public static class AlterOptionsValidator
                         remainingCommand = remaining;
                         allOptionsCovered = true;
                     }
+                } else
+                {
+                    Helper.TryGetNextToken(remainingCommand, out nextToken);
+                    errorLine = "Expected an identifier but got: " + nextToken.ToString();
+                    return false;
                 }
             }
             else
             {
+                Helper.TryGetNextToken(remainingCommand, out nextToken);
+                errorLine = "Expected 'ADD', 'SET' or 'DROP' but got: " + nextToken.ToString();
                 return false;
             }
 
         }
+        errorLine = "";
         return true;
     }
     
