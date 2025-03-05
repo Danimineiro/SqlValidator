@@ -12,6 +12,8 @@ public static class AlterValidator
     {
         ReadOnlySpan<char> remainingCommand = command;
         ReadOnlySpan<char> remaining = [];
+        ReadOnlySpan<char> nextToken;
+        String errorLine;
         if (CheckForVirtualOrForeign(remainingCommand, out remaining))
         {
             remainingCommand = remaining;
@@ -21,18 +23,28 @@ public static class AlterValidator
                 if (Helper.IsNextTokenIdentifier(remainingCommand, out remaining))
                 {
                     remainingCommand = remaining;
-                    if (AlterOptionsValidator.Validate(remainingCommand) || AlterColumnValidator.Validate(remainingCommand))
+                    if (AlterColumnValidator.Validate(remainingCommand, out errorLine) || AlterOptionsValidator.Validate(remainingCommand, out errorLine))
                     {
                         return true;
+                    }
+                    else
+                    {
+                        Console.WriteLine(errorLine);
+                        return false;
                     }
                 }
                 else
                 {
+                    Helper.TryGetNextToken(remainingCommand, out nextToken);
+                    Console.WriteLine("Expected an identifier but got " + nextToken.ToString());
                     return false;
                 }
             }
             else
             {
+
+                Helper.TryGetNextToken(remainingCommand, out nextToken);
+                Console.WriteLine("Expected 'TABLE', 'VIEW' OR 'PROCEDURE' but got " + nextToken.ToString());
                 return false;
             }
 
@@ -43,12 +55,19 @@ public static class AlterValidator
             if (Helper.IsNextTokenIdentifier(remainingCommand, out remaining))
             {
                 remainingCommand = remaining;
-                if (AlterOptionsValidator.Validate(remainingCommand) || AlterColumnValidator.Validate(remainingCommand))
+                if (AlterColumnValidator.Validate(remainingCommand, out errorLine) || AlterOptionsValidator.Validate(remainingCommand, out errorLine))
                 {
                     return true;
                 }
+                else
+                {
+                    Console.WriteLine(errorLine);
+                    return false;
+                }
             }
         }
+        Helper.TryGetNextToken(remainingCommand, out nextToken);
+        Console.WriteLine("Expected 'TABLE', 'VIEW' OR 'PROCEDURE' but got " + nextToken.ToString());
         return false;
     }
 
