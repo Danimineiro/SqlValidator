@@ -4,6 +4,12 @@ public static class SqlStringValidator
     public static bool Validate(ReadOnlySpan<char> input, out ReadOnlySpan<char> remaining)
     {
         remaining = input;
+        if (input.IsEmpty)
+        {
+            Console.WriteLine($"Expected string, but got nothing instead.");
+            return false;
+        }
+
         if (input[0] != '\'')
         {
             Console.WriteLine($"String must start with \"'\", but got \"{input[0]}\" instead.");
